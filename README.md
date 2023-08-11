@@ -1,2 +1,2 @@
 # Chorus
-CHorous programing language
+Chorous programing language
