@@ -1,18 +1,18 @@
-package dev.redio.chorus.tokenizer;
+package dev.redio.chorus.parser.node;
 
 import java.util.Optional;
 
-public class FileToken implements Token {
+public class FileNode implements Node {
 
     
 
     @Override
-    public Optional<Token> parent() {
+    public Optional<Node> parent() {
        return Optional.empty();
     }
 
     @Override
-    public Token[] childs() {
+    public Node[] childs() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'childs'");
     }

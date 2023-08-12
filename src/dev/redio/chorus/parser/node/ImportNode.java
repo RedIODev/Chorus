@@ -1,27 +1,27 @@
-package dev.redio.chorus.tokenizer;
+package dev.redio.chorus.parser.node;
 
 import java.util.Optional;
 
-import dev.redio.chorus.tokenizer.exceptions.IllegalParentException;
+import dev.redio.chorus.parser.exception.IllegalParentException;
 
-public class ImportToken implements Token {
+public class ImportNode implements Node {
 
-    private final Token parent;
+    private final Node parent;
 
-    public ImportToken(Token parent) {
+    public ImportNode(Node parent) {
         this.parent = switch (parent) {
-            case NamespaceToken nt -> nt;
+            case NamespaceNode nt -> nt;
             case null -> throw new IllegalParentException(parent);
             default -> throw new IllegalParentException(parent);
         };
     }
     @Override
-    public Optional<Token> parent() {
+    public Optional<Node> parent() {
         return Optional.of(parent);
     }
 
     @Override
-    public Token[] childs() {
+    public Node[] childs() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'childs'");
     }

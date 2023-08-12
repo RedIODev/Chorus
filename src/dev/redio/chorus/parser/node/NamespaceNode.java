@@ -1,30 +1,31 @@
-package dev.redio.chorus.tokenizer;
+package dev.redio.chorus.parser.node;
 
 import java.util.Optional;
 
-import dev.redio.chorus.tokenizer.exceptions.IllegalChildException;
-import dev.redio.chorus.tokenizer.exceptions.IllegalParentException;
+import dev.redio.chorus.FormatHelper;
+import dev.redio.chorus.parser.exception.IllegalChildException;
+import dev.redio.chorus.parser.exception.IllegalParentException;
 
-public class NamespaceToken implements Token {
+public class NamespaceNode implements Node {
 
-    private final Token parent;
-    private final Token[] childs;
+    private final Node parent;
+    private final Node[] childs;
 
-    public NamespaceToken(Token parent, Token... childs) {
+    public NamespaceNode(Node parent, Node... childs) {
         this.parent = switch (parent) {
-            case NamespaceToken nt -> nt;
-            case FileToken ft -> ft;
+            case NamespaceNode nt -> nt;
+            case FileNode ft -> ft;
             case null -> throw new IllegalParentException(parent);
             default -> throw new  IllegalParentException(parent);
         };
         if (childs == null) {
-            this.childs = new Token[0];
+            this.childs = new Node[0];
             return;
         }
         
-        for (Token child : childs) {
+        for (Node child : childs) {
             switch (child) {
-                case NamespaceToken nt -> {}
+                case NamespaceNode nt -> {}
 
                 case null -> throw new IllegalChildException(child);
                 default -> throw new IllegalChildException(child);
@@ -35,12 +36,12 @@ public class NamespaceToken implements Token {
     }
 
     @Override
-    public Optional<Token> parent() {
+    public Optional<Node> parent() {
         return Optional.of(parent);
     }
 
     @Override
-    public Token[] childs() {
+    public Node[] childs() {
        return childs;
     }
 
