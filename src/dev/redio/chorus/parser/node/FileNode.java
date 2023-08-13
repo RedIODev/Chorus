@@ -3,20 +3,17 @@ package dev.redio.chorus.parser.node;
 import java.nio.file.Path;
 import java.util.Optional;
 
+import dev.redio.chorus.parser.exception.IllegalChildException;
+
 public class FileNode implements ContainerNode {
 
-    private final NamespaceNode[] childs;
+    private Node[] childs = ContainerNode.EMPTY;
     private final Path sourcePath;
 
-    private static final NamespaceNode[] EMPTY = {};
-
-    public FileNode(Path sourcePath, NamespaceNode... childs) {
+    public FileNode(Path sourcePath) {
         if (sourcePath == null)
             throw new IllegalArgumentException("sourcePath cannot be null");
         this.sourcePath = sourcePath;
-        if (childs == null) 
-            childs = EMPTY;
-        this.childs = childs;
     }
 
     @Override
@@ -25,8 +22,20 @@ public class FileNode implements ContainerNode {
     }
 
     @Override
-    public NamespaceNode[] childs() {
+    public Node[] childs() {
         return childs;
+    }
+
+     @Override
+    public void setChilds(Node[] childs) {
+        for (var child : childs) {
+            switch (child) {
+                case NamespaceNode nn -> {}
+                case null -> throw new IllegalChildException(child);
+                default -> throw new IllegalChildException(child);
+            }
+        }
+        this.childs = childs;
     }
 
     public Path sourcePath() {
@@ -57,6 +66,8 @@ public class FileNode implements ContainerNode {
         builder.setLength(builder.length()- System.lineSeparator().length());
         return builder.toString();
     }
+
+   
 
     
 }

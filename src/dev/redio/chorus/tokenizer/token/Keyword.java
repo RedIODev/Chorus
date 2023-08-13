@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public enum Keyword implements Token {
+public enum Keyword {
     CURLY_BRACE_OPEN("{"),
     CURLY_BRACE_CLOSED("}"),
     SQUARE_BRACE_OPEN("["),

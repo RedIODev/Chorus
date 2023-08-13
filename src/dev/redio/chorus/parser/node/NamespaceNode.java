@@ -10,9 +10,9 @@ public class NamespaceNode implements ContainerNode {
     private final Node parent;
     private final AccessModifier accessModifier;
     private final IdentifierNode identifier;
-    private final Node[] childs;
+    private Node[] childs = ContainerNode.EMPTY;
 
-    public NamespaceNode(Node parent, AccessModifier accessModifier, IdentifierNode identifier, Node... childs) {
+    public NamespaceNode(Node parent, AccessModifier accessModifier, IdentifierNode identifier) {
         this.parent = switch (parent) {
             case NamespaceNode nt -> nt;
             case FileNode ft -> ft;
@@ -29,20 +29,6 @@ public class NamespaceNode implements ContainerNode {
             throw new IllegalArgumentException("identifier cannot be null");
 
         this.identifier = identifier;
-
-        if (childs == null) {
-            childs = ContainerNode.EMPTY;
-        }
-        
-        for (Node child : childs) {
-            switch (child) {
-                case NamespaceNode nt -> {}
-
-                case null -> throw new IllegalChildException(child);
-                default -> throw new IllegalChildException(child);
-            }
-        }
-        this.childs = childs;
     }
 
     @Override
@@ -53,6 +39,19 @@ public class NamespaceNode implements ContainerNode {
     @Override
     public Node[] childs() {
        return childs;
+    }
+
+    @Override
+    public void setChilds(Node[] childs) {
+        for (Node child : childs) {
+            switch (child) {
+                case NamespaceNode nt -> {}
+
+                case null -> throw new IllegalChildException(child);
+                default -> throw new IllegalChildException(child);
+            }
+        }
+        this.childs = childs;
     }
 
     public AccessModifier accessModifier() {
@@ -93,5 +92,7 @@ public class NamespaceNode implements ContainerNode {
         builder.append("}");
         return builder.toString();
     }
+
+    
     
 }
