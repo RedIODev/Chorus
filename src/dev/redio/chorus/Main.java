@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
-import dev.redio.chorus.tokenizer.token.Keyword;
 import dev.redio.chorus.tokenizer.token.Tokenizer;
 
 public class Main {

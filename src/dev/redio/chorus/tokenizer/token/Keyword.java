@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 public enum Keyword implements Token {
     CURLY_BRACE_OPEN("{"),
@@ -107,6 +105,7 @@ public enum Keyword implements Token {
     AWAIT("await"),
     YIELD("yield"),
     IN("in"),
+    UNSIGNED("unsigned"),
     ;
 
     private static final Comparator<Keyword> COMPARATOR = (t1, t2) -> t1.raw().length() - t2.raw().length();

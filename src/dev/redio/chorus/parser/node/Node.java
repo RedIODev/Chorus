@@ -4,5 +4,8 @@ import java.util.Optional;
 
 public interface Node {
     Optional<Node> parent();
-    Node[] childs();
+    
+    String raw();
+
+    
 }

@@ -1,7 +1,5 @@
 package dev.redio.chorus;
 
-import java.util.ArrayList;
-
 public final class FormatHelper {
     private FormatHelper() {}
 
