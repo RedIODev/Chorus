@@ -20,11 +20,11 @@ public class ImportNode implements Node {
     public ImportNode(Node parent, PathNode path, IdentifierNode alias) {
         this.parent = switch (parent) {
             case NamespaceNode nt -> nt;
-            case null -> throw new IllegalParentException(parent);
-            default -> throw new IllegalParentException(parent);
+            case null -> throw new IllegalParentException(parent, this);
+            default -> throw new IllegalParentException(parent, this);
         };
         if (path == null) 
-            throw new IllegalChildException(path);
+            throw new IllegalChildException(path, this);
         this.path = path;
 
         this.alias = alias;

@@ -13,8 +13,8 @@ public class IdentifierNode implements Node {
     public IdentifierNode(Node parent, String name) {
         this.parent = switch (parent) {
             case PathNode pn -> pn;
-            case null -> throw new IllegalParentException(parent);
-            default -> throw new IllegalParentException(parent);
+            case null -> throw new IllegalParentException(parent, this);
+            default -> throw new IllegalParentException(parent, this);
         };
 
         if (name == null) 

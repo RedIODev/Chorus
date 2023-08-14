@@ -16,8 +16,8 @@ public class NamespaceNode implements ContainerNode {
         this.parent = switch (parent) {
             case NamespaceNode nt -> nt;
             case FileNode ft -> ft;
-            case null -> throw new IllegalParentException(parent);
-            default -> throw new IllegalParentException(parent);
+            case null -> throw new IllegalParentException(parent, this);
+            default -> throw new IllegalParentException(parent, this);
         };
 
         if (accessModifier == null) 
@@ -47,8 +47,8 @@ public class NamespaceNode implements ContainerNode {
             switch (child) {
                 case NamespaceNode nt -> {}
 
-                case null -> throw new IllegalChildException(child);
-                default -> throw new IllegalChildException(child);
+                case null -> throw new IllegalChildException(child, this);
+                default -> throw new IllegalChildException(child, this);
             }
         }
         this.childs = childs;

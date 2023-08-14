@@ -31,8 +31,8 @@ public class FileNode implements ContainerNode {
         for (var child : childs) {
             switch (child) {
                 case NamespaceNode nn -> {}
-                case null -> throw new IllegalChildException(child);
-                default -> throw new IllegalChildException(child);
+                case null -> throw new IllegalChildException(child, this);
+                default -> throw new IllegalChildException(child, this);
             }
         }
         this.childs = childs;

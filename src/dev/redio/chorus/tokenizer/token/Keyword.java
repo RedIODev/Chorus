@@ -106,6 +106,10 @@ public enum Keyword {
     YIELD("yield"),
     IN("in"),
     UNSIGNED("unsigned"),
+    WITH("with"),
+    WHERE("where"),
+    BLOCK("block"),
+    SUPER("super"),
     ;
 
     private static final Comparator<Keyword> COMPARATOR = (t1, t2) -> t1.raw().length() - t2.raw().length();

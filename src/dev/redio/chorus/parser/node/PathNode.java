@@ -15,15 +15,13 @@ public class PathNode implements Node {
     public PathNode(Node parent, IdentifierNode... path) {
         this.parent = switch (parent) {
             case ImportNode in -> in;
-            case null -> throw new IllegalParentException(parent);
-            default -> throw new IllegalParentException(parent);
+            case null -> throw new IllegalParentException(parent, this);
+            default -> throw new IllegalParentException(parent, this);
         };
 
-        if (path == null) {
-            this.path = EMPTY;
-            return;
-        }
-
+        if (path == null) 
+            path = EMPTY;
+        
         this.path = path;
     }
 
