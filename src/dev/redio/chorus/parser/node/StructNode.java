@@ -2,6 +2,7 @@ package dev.redio.chorus.parser.node;
 
 import java.util.Optional;
 
+import dev.redio.chorus.parser.EmptyArrays;
 import dev.redio.chorus.parser.exception.IllegalChildException;
 import dev.redio.chorus.parser.exception.IllegalModifierException;
 import dev.redio.chorus.parser.exception.IllegalParentException;
@@ -14,10 +15,7 @@ public class StructNode implements ContainerNode {
     private final IdentifierNode identifier;
     private final GenericParameterNode[] genericParameters;
     
-    private Node[] childs = ContainerNode.EMPTY;
-    
-    private static final GenericParameterNode[] GENERICS_EMPTY = {};
-    private static final Modifier[] EMPTY = {};
+    private Node[] childs = EmptyArrays.NODES_EMPTY;
 
     public StructNode(Node parent, AccessModifier accessModifier, Modifier[] modifiers, IdentifierNode identifier, GenericParameterNode[] genericParameters) {
         this.parent = switch (parent) {
@@ -37,7 +35,7 @@ public class StructNode implements ContainerNode {
         this.identifier = identifier;
 
         if (modifiers == null)
-            modifiers = EMPTY;
+            modifiers = EmptyArrays.MODIFIERS_EMPTY;
 
         for (var modifier : modifiers) {
             switch (modifier) {
@@ -49,7 +47,7 @@ public class StructNode implements ContainerNode {
         this.modifiers = modifiers;
 
         if (genericParameters == null)
-            genericParameters = GENERICS_EMPTY;
+            genericParameters = EmptyArrays.GENERIC_PARAMETER_NODES_EMPTY;
         this.genericParameters = genericParameters;
     }
 

@@ -3,11 +3,12 @@ package dev.redio.chorus.parser.node;
 import java.nio.file.Path;
 import java.util.Optional;
 
+import dev.redio.chorus.parser.EmptyArrays;
 import dev.redio.chorus.parser.exception.IllegalChildException;
 
 public class FileNode implements ContainerNode {
 
-    private Node[] childs = ContainerNode.EMPTY;
+    private Node[] childs = EmptyArrays.NODES_EMPTY;
     private final Path sourcePath;
 
     public FileNode(Path sourcePath) {

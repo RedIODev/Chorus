@@ -2,6 +2,7 @@ package dev.redio.chorus.parser.node;
 
 import java.util.Optional;
 
+import dev.redio.chorus.parser.EmptyArrays;
 import dev.redio.chorus.parser.exception.IllegalChildException;
 import dev.redio.chorus.parser.exception.IllegalParentException;
 
@@ -10,7 +11,7 @@ public class NamespaceNode implements ContainerNode {
     private final Node parent;
     private final AccessModifier accessModifier;
     private final IdentifierNode identifier;
-    private Node[] childs = ContainerNode.EMPTY;
+    private Node[] childs = EmptyArrays.NODES_EMPTY;
 
     public NamespaceNode(Node parent, AccessModifier accessModifier, IdentifierNode identifier) {
         this.parent = switch (parent) {

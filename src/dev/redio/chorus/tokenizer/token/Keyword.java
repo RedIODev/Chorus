@@ -1,5 +1,8 @@
 package dev.redio.chorus.tokenizer.token;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -77,19 +80,19 @@ public enum Keyword {
     PUBLIC("public"),
     LOCAL("local"),
     CONST("const"),
-    MOD("mod"),
+    MUT("mut"),
     STRUCT("struct"),
     VAR("var"),
     UNSAFE("unsafe"),
     EXTERN("extern"),
     INLINE("inline"),
     INTERFACE("interface"),
-    FP("fp"),
+    //FP("fp"),
     TYPE("type"),
     AS("as"),
     FN("fn"),
-    HEAP("heap"),
-    STACK("stack"),
+    //HEAP("heap"),     //contextual
+    //STACK("stack"),   //contextual
     BREAK("break"),
     CONTINUE("continue"),
     IF("if"),
@@ -101,20 +104,22 @@ public enum Keyword {
     ENUM("enum"),
     UNION("union"),
     STATIC("static"),
-    ASYNC("async"),
-    AWAIT("await"),
+    STAGED("staged"),
     YIELD("yield"),
     IN("in"),
     UNSIGNED("unsigned"),
     WITH("with"),
     WHERE("where"),
-    BLOCK("block"),
     SUPER("super"),
     SATISFIES("satisfies"),
     ALLOC("alloc"),
-    FUNC("func"),
+    FUNCS("funcs"),
+    REF("ref"),
+    SELF("Self"),
+    
     __LINE("__line"),
     __FILE("__file"),
+
     ;
 
     private static final Comparator<Keyword> COMPARATOR = (t1, t2) -> t1.raw().length() - t2.raw().length();

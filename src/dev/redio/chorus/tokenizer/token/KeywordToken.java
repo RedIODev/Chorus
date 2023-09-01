@@ -9,7 +9,7 @@ public record KeywordToken(Keyword keyword, int line, int column) implements Tok
 
     @Override
     public String toString() {
-        return keyword.toString() + "@Ln:" + (line+1) + "Col:" + (column+1);
+        return keyword.toString() + "@:" + (line+1) + ":" + (column+1);
     }
    
     

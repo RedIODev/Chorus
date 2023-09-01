@@ -10,7 +10,7 @@ import dev.redio.chorus.tokenizer.token.Tokenizer;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-
+         
         var tokens = Tokenizer.tokenize2(Files.lines(Path.of("Testfile.ch")).toArray(String[]::new));
         for (var token : tokens) {
             System.out.println(token);
