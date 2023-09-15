@@ -134,4 +134,5 @@ pub struct IdentifierToken {
     source_position: SourcePosition,
 }
 
+pub use tokenizer::ordered_keywords;
 pub use tokenizer::tokenize;

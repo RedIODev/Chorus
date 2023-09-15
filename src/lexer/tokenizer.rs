@@ -8,12 +8,13 @@ pub fn tokenize(lines: &[&str]) -> Box<[Box<dyn Token>]> {
     accumelator.into_boxed_slice()
 }
 
-fn ordered_keywords() -> impl Iterator<Item = Keyword> {
+pub fn ordered_keywords() -> impl Iterator<Item = Keyword> {
     lazy_static! {
         static ref LIST: [Keyword; Keyword::COUNT] = {
             let mut vec = Keyword::iter().collect::<Vec<_>>();
-            vec.sort_by_key(|k2| std::cmp::Reverse(k2.raw().len()));
-            vec.try_into().unwrap()
+            vec.sort_by_key(|k2| std::cmp::Reverse(k2.raw().chars().count()));
+            vec.try_into()
+                .expect("Keyword::COUNT != Keyword::iter().count() should be unreachable")
         };
     }
     LIST.iter().copied()

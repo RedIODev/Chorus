@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use strum::IntoEnumIterator;
 
 use crate::error::LexerError;
@@ -26,6 +28,12 @@ impl TryFrom<&str> for Keyword {
             }
         }
         Err(LexerError::KeywordNotFound(value.to_owned()))
+    }
+}
+
+impl Display for Keyword {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.raw())
     }
 }
 
