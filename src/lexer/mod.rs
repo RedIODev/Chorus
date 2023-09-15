@@ -1,6 +1,6 @@
 pub mod impls;
 mod tokenizer;
-use strum_macros::EnumIter;
+use strum_macros::{EnumCount, EnumIter};
 
 pub trait Token {
     fn raw(&self) -> &str;
@@ -13,7 +13,7 @@ pub struct SourcePosition {
     pub column: u32,
 }
 
-#[derive(Clone, Copy, EnumIter)]
+#[derive(Debug, Clone, Copy, EnumIter, EnumCount, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Keyword {
     //single character keywords
     BracketRoundOpen,
