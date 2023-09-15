@@ -1,16 +1,19 @@
-pub(crate) mod impls;
-use std::rc::Rc;
+pub mod impls;
+mod tokenizer;
+use strum_macros::EnumIter;
 
 pub trait Token {
-    fn raw(&self) -> Rc<str>;
+    fn raw(&self) -> &str;
     fn source_position(&self) -> SourcePosition;
 }
 
+#[derive(Clone, Copy)]
 pub struct SourcePosition {
     pub row: u32,
     pub column: u32,
 }
 
+#[derive(Clone, Copy, EnumIter)]
 pub enum Keyword {
     //single character keywords
     BracketRoundOpen,
@@ -122,7 +125,13 @@ pub enum Keyword {
 }
 
 pub struct KeywordToken {
+    keyword: Keyword,
     source_position: SourcePosition,
-    keyword:Keyword,
 }
 
+pub struct IdentifierToken {
+    raw: Box<str>,
+    source_position: SourcePosition,
+}
+
+pub use tokenizer::tokenize;
