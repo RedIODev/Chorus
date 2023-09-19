@@ -45,9 +45,12 @@ where
 
 fn get_token_from_line(mut line: &str, pos: &mut SourcePosition) -> Option<Box<dyn Token>> {
     let line_org = line;
-    while !line.is_empty() {//line problem here. rethink slicing of line (infinite loop incorrenct condition)
+    loop {//line problem here. rethink slicing of line (infinite loop incorrenct condition)
         line = &line_org[pos.column as usize..];
-        println!("line:[{}] len:{}", line, line.len());
+        //println!("line:[{}] len:{}", line, line.len());
+        if line.is_empty() {
+            return None;
+        }
         if let Some(len) = starts_with_whitespace(line) {
             pos.column += len as u32;
             continue;
@@ -58,7 +61,8 @@ fn get_token_from_line(mut line: &str, pos: &mut SourcePosition) -> Option<Box<d
             return Some(Box::new(KeywordToken::new(keyword, current_pos)));
         }
         let mut end = 0;
-        while line.len() > end && starts_with_symbol(&line[end..]).is_none() {
+
+        while starts_with_identifier(&line[end..]) {
             end += 1;
         }
         let current_pos = *pos;
@@ -68,7 +72,10 @@ fn get_token_from_line(mut line: &str, pos: &mut SourcePosition) -> Option<Box<d
             current_pos,
         )));
     }
-    None
+}
+
+fn starts_with_identifier(line:&str) -> bool {
+    !line.is_empty() && starts_with_whitespace(line).is_none() && starts_with_symbol(line).is_none()
 }
 
 fn starts_with_whitespace(line: &str) -> Option<usize> {

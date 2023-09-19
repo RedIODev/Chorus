@@ -1,10 +1,18 @@
-use std::{fmt::Display, io::BufReader, io::{BufRead, Lines}, fs::File, iter::Map};
+use std::{
+    fmt::Display,
+    fs::File,
+    io::BufReader,
+    io::{BufRead, Lines},
+};
 
 use strum::IntoEnumIterator;
 
 use crate::{error::LexerError, helper::PausableIterAdapter};
 
-use super::{IdentifierToken, Keyword, KeywordToken, SourcePosition, Token, TokenStream, CodeSource, tokenizer, FileCodeSource, FileCodeSourceImpl, TokenResult, LineIter};
+use super::{
+    tokenizer, CodeSource, FileCodeSource, FileCodeSourceImpl, IdentifierToken, Keyword,
+    KeywordToken, SourcePosition, Token, TokenResult, TokenStream,
+};
 
 impl SourcePosition {
     pub fn new(row: u32, column: u32) -> Self {
@@ -160,9 +168,10 @@ impl IdentifierToken {
 }
 
 impl<'a, CS> Iterator for TokenStream<CS>
-where CS: CodeSource,
+where
+    CS: CodeSource,
 {
-    type Item = Result<Box<dyn Token>,CS::Error>;
+    type Item = Result<Box<dyn Token>, CS::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         tokenizer::next_token(self).into()
@@ -170,10 +179,14 @@ where CS: CodeSource,
 }
 
 impl<'a, CS> TokenStream<CS>
-where CS: CodeSource,
+where
+    CS: CodeSource,
 {
     pub fn new(iter: CS::Iter) -> Self {
-        Self { iter: iter.pausable_iter(), current_pos: SourcePosition::default() }
+        Self {
+            iter: iter.pausable_iter(),
+            current_pos: SourcePosition::default(),
+        }
     }
 }
 
@@ -187,17 +200,17 @@ impl<E> From<Option<Box<dyn Token>>> for TokenResult<E> {
     fn from(value: Option<Box<dyn Token>>) -> Self {
         match value {
             Some(t) => Self::Some(t),
-            None => Self::None
+            None => Self::None,
         }
     }
 }
 
-impl<E> Into<Option<Result<Box<dyn Token>,E>>> for TokenResult<E> {
-    fn into(self) -> Option<Result<Box<dyn Token>,E>> {
+impl<E> Into<Option<Result<Box<dyn Token>, E>>> for TokenResult<E> {
+    fn into(self) -> Option<Result<Box<dyn Token>, E>> {
         match self {
             TokenResult::Some(t) => Some(Ok(t)),
             TokenResult::None => None,
-            TokenResult::Err(e) => Some(Err(e))
+            TokenResult::Err(e) => Some(Err(e)),
         }
     }
 }
@@ -211,15 +224,18 @@ impl CodeSource for FileCodeSourceImpl {
         todo!()
     }
 
-    fn iter(&self) -> Result<TokenStream<Self>,Self::Error> where Self: Sized {
+    fn iter(&self) -> Result<TokenStream<Self>, Self::Error>
+    where
+        Self: Sized,
+    {
         let ts = TokenStream::new(BufReader::new(self.file.try_clone()?).lines());
         Ok(ts)
     }
 }
 
 impl FileCodeSourceImpl {
-    pub fn new(file:File) -> Self {
-        Self { file  }
+    pub fn new(file: File) -> Self {
+        Self { file }
     }
 }
 
@@ -239,6 +255,6 @@ impl FileCodeSourceImpl {
 //     type Item = Result<String, std::io::Error>;
 
 //     fn next(&mut self) -> Option<Self::Item> {
-        
+
 //     }
 // }

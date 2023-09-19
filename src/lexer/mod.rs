@@ -106,8 +106,6 @@ pub struct IdentifierToken {
     source_position: SourcePosition,
 }
 
-pub type LineIter<E> = Box<dyn Iterator<Item = Result<String, E>>>;
-
 pub trait CodeSource {
     type Iter: Iterator<Item = Result<String, Self::Error>>;
     type Error;
