@@ -1,14 +1,14 @@
-use std::fmt::Display;
+use std::{fmt::Display, io::BufReader, io::{BufRead, Lines}, fs::File, iter::Map};
 
 use strum::IntoEnumIterator;
 
-use crate::error::LexerError;
+use crate::{error::LexerError, helper::PausableIterAdapter};
 
-use super::{IdentifierToken, Keyword, KeywordToken, SourcePosition, Token};
+use super::{IdentifierToken, Keyword, KeywordToken, SourcePosition, Token, TokenStream, CodeSource, tokenizer, FileCodeSource, FileCodeSourceImpl, TokenResult, LineIter};
 
 impl SourcePosition {
     pub fn new(row: u32, column: u32) -> Self {
-        Self { row, column }
+        Self { line: row, column }
     }
 }
 
@@ -72,37 +72,6 @@ impl Keyword {
             K::Caret => "^",
             K::Degree => "°",
             K::At => "@",
-            K::CommentLine => "//",
-            K::CommentStart => "/*",
-            K::CommentEnd => "*/",
-            K::EqualsDouble => "==",
-            K::EqualsLess => "<=",
-            K::EqualsMore => ">=",
-            K::EqualsNot => "!=",
-            K::EqualsStar => "*=",
-            K::EqualsSlash => "/=",
-            K::EqualsPlus => "+=",
-            K::EqualsMinus => "-=",
-            K::EqualsPercent => "%=",
-            K::EqualsAnd => "&=",
-            K::EqualsPipe => "|=",
-            K::EqualsTide => "~=",
-            K::EqualsCaret => "^=",
-            K::EqualsMarkQuestion => "?=",
-            K::EqualsHashtag => "#=",
-            K::EqualsDegree => "°=",
-            K::EqualsAt => "@=",
-            K::ShiftLeft => "<<",
-            K::ShiftRight => ">>",
-            K::AndDouble => "&&",
-            K::PipeDouble => "||",
-            K::Arrow => "->",
-            K::ArrowFat => "=>",
-            K::ColonDoubleDouble => "::",
-            K::EqualsShiftLeft => "<<=",
-            K::EqualsShiftRight => ">>=",
-            K::EqualsAndDouble => "&&=",
-            K::EqualsPipeDouble => "||=",
             K::Namespace => "namespace",
             K::Import => "import",
             K::Public => "public",
@@ -137,6 +106,7 @@ impl Keyword {
             K::Where => "where",
             K::Super => "super",
             K::Satisfies => "satisfies",
+            K::Is => "is",
             K::Alloc => "alloc",
             K::Implement => "implement",
             K::Ref => "ref",
@@ -188,3 +158,87 @@ impl IdentifierToken {
         }
     }
 }
+
+impl<'a, CS> Iterator for TokenStream<CS>
+where CS: CodeSource,
+{
+    type Item = Result<Box<dyn Token>,CS::Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        tokenizer::next_token(self).into()
+    }
+}
+
+impl<'a, CS> TokenStream<CS>
+where CS: CodeSource,
+{
+    pub fn new(iter: CS::Iter) -> Self {
+        Self { iter: iter.pausable_iter(), current_pos: SourcePosition::default() }
+    }
+}
+
+impl FileCodeSource for FileCodeSourceImpl {
+    fn filename(&self) -> &str {
+        todo!()
+    }
+}
+
+impl<E> From<Option<Box<dyn Token>>> for TokenResult<E> {
+    fn from(value: Option<Box<dyn Token>>) -> Self {
+        match value {
+            Some(t) => Self::Some(t),
+            None => Self::None
+        }
+    }
+}
+
+impl<E> Into<Option<Result<Box<dyn Token>,E>>> for TokenResult<E> {
+    fn into(self) -> Option<Result<Box<dyn Token>,E>> {
+        match self {
+            TokenResult::Some(t) => Some(Ok(t)),
+            TokenResult::None => None,
+            TokenResult::Err(e) => Some(Err(e))
+        }
+    }
+}
+
+impl CodeSource for FileCodeSourceImpl {
+    type Iter = Lines<BufReader<File>>;
+
+    type Error = std::io::Error;
+
+    fn desc(&self) -> &str {
+        todo!()
+    }
+
+    fn iter(&self) -> Result<TokenStream<Self>,Self::Error> where Self: Sized {
+        let ts = TokenStream::new(BufReader::new(self.file.try_clone()?).lines());
+        Ok(ts)
+    }
+}
+
+impl FileCodeSourceImpl {
+    pub fn new(file:File) -> Self {
+        Self { file  }
+    }
+}
+
+// impl CodeSource for FileCodeSourceImpl {
+//     type Error = std::io::Error;
+
+//     fn desc(&self) -> &str {
+//         todo!()
+//     }
+
+//     // fn line_iter(&self) -> Self::Iter {
+//     //     BufReader::new(self.filepath).lines().map(|r| r.map(String::as_str))
+//     // }
+// }
+
+// impl Iterator for FileCodeSourceImpl {
+//     type Item = Result<String, std::io::Error>;
+
+//     fn next(&mut self) -> Option<Self::Item> {
+        
+//     }
+// }

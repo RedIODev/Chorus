@@ -1,5 +1,8 @@
 pub mod impls;
 mod tokenizer;
+
+use std::fs::File;
+
 use strum_macros::{EnumCount, EnumIter};
 
 pub trait Token {
@@ -7,9 +10,9 @@ pub trait Token {
     fn source_position(&self) -> SourcePosition;
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct SourcePosition {
-    pub row: u32,
+    pub line: u32,
     pub column: u32,
 }
 
@@ -47,39 +50,7 @@ pub enum Keyword {
     Caret,
     Degree,
     At,
-    //double character keywords
-    CommentLine,
-    CommentStart,
-    CommentEnd,
-    EqualsDouble,
-    EqualsLess,
-    EqualsMore,
-    EqualsNot,
-    EqualsStar,
-    EqualsSlash,
-    EqualsPlus,
-    EqualsMinus,
-    EqualsPercent,
-    EqualsAnd,
-    EqualsPipe,
-    EqualsTide,
-    EqualsCaret,
-    EqualsMarkQuestion,
-    EqualsHashtag,
-    EqualsDegree,
-    EqualsAt,
-    ShiftLeft,
-    ShiftRight,
-    AndDouble,
-    PipeDouble,
-    Arrow,
-    ArrowFat,
-    ColonDoubleDouble,
-    //triple character keywords
-    EqualsShiftLeft,
-    EqualsShiftRight,
-    EqualsAndDouble,
-    EqualsPipeDouble,
+
     //word keywords
     Namespace,
     Import,
@@ -115,6 +86,7 @@ pub enum Keyword {
     Where,
     Super,
     Satisfies,
+    Is,
     Alloc,
     Implement,
     Ref,
@@ -134,5 +106,35 @@ pub struct IdentifierToken {
     source_position: SourcePosition,
 }
 
-pub use tokenizer::ordered_keywords;
-pub use tokenizer::tokenize;
+pub type LineIter<E> = Box<dyn Iterator<Item = Result<String, E>>>;
+
+pub trait CodeSource {
+    type Iter: Iterator<Item = Result<String, Self::Error>>;
+    type Error;
+    fn desc(&self) -> &str;
+
+    fn iter(&self) -> Result<TokenStream<Self>, Self::Error> where Self: Sized;
+}
+
+pub trait FileCodeSource: CodeSource {
+    fn filename(&self) -> &str;
+}
+
+pub struct FileCodeSourceImpl {
+    file:File
+}
+
+pub struct TokenStream<CS> 
+where CS: CodeSource,
+{
+    iter:PausableIter<CS::Iter>,
+    current_pos: SourcePosition
+}
+
+pub enum TokenResult<E> {
+    None,
+    Some(Box<dyn Token>),
+    Err(E)
+}
+
+use crate::helper::PausableIter;
