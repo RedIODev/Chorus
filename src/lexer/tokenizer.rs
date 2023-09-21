@@ -3,7 +3,10 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{helper::Strlen, lexer::KeywordToken};
 
-use super::{CodeSource, IdentifierToken, Keyword, SourcePosition, Token, TokenStream, TokenResult};
+use super::{
+    CodeSource, CommentToken, CommentType, IdentifierToken, Keyword, SourcePosition, Token,
+    TokenResult, TokenStream,
+};
 use strum::{EnumCount, IntoEnumIterator};
 
 fn ordered_keywords() -> impl Iterator<Item = Keyword> {
@@ -19,8 +22,7 @@ fn ordered_keywords() -> impl Iterator<Item = Keyword> {
 }
 
 fn ordered_symbols() -> impl Iterator<Item = Keyword> {
-    ordered_keywords()
-    .filter(|keyword| !keyword.raw().contains(char::is_alphanumeric))
+    ordered_keywords().filter(|keyword| !keyword.raw().contains(char::is_alphanumeric))
 }
 
 pub(super) fn next_token<CS>(stream: &mut TokenStream<CS>) -> TokenResult<CS::Error>
@@ -30,24 +32,22 @@ where
     for line in &mut stream.iter {
         let line_ok = match line {
             Ok(ref line) => line.as_str(),
-            Err(e) => return TokenResult::Err(e)
+            Err(e) => return TokenResult::Err(e),
         };
         let token = get_token_from_line(line_ok, &mut stream.current_pos);
         if let Some(token) = token {
             stream.iter.pause(line);
             return Some(token).into();
         }
-        stream.current_pos.line += 1;
-        stream.current_pos.column = 0;
+        stream.current_pos.new_line();
     }
     None.into()
 }
 
-fn get_token_from_line(mut line: &str, pos: &mut SourcePosition) -> Option<Box<dyn Token>> {
+fn get_token_from_line(mut line: &str, pos: &mut SourcePosition) -> Option<Token> {
     let line_org = line;
-    loop {//line problem here. rethink slicing of line (infinite loop incorrenct condition)
+    loop {
         line = &line_org[pos.column as usize..];
-        //println!("line:[{}] len:{}", line, line.len());
         if line.is_empty() {
             return None;
         }
@@ -55,11 +55,26 @@ fn get_token_from_line(mut line: &str, pos: &mut SourcePosition) -> Option<Box<d
             pos.column += len as u32;
             continue;
         }
+
+        if starts_with_line_comment(line) {
+            let current_pos = *pos;
+            pos.column += line.len() as u32;
+            return Some(
+                CommentToken::new(
+                    CommentType::LineComment,
+                    Box::from(line.trim_end()),
+                    current_pos,
+                )
+                .into(),
+            );
+        }
+
         if let Some(keyword) = starts_with_keyword(line) {
             let current_pos = *pos;
             pos.column += keyword.raw().len() as u32;
-            return Some(Box::new(KeywordToken::new(keyword, current_pos)));
+            return Some(KeywordToken::new(keyword, current_pos).into());
         }
+
         let mut end = 0;
 
         while starts_with_identifier(&line[end..]) {
@@ -67,14 +82,11 @@ fn get_token_from_line(mut line: &str, pos: &mut SourcePosition) -> Option<Box<d
         }
         let current_pos = *pos;
         pos.column += end as u32;
-        return Some(Box::new(IdentifierToken::new(
-            Box::from(line[..end].trim_end()),
-            current_pos,
-        )));
+        return Some(IdentifierToken::new(Box::from(line[..end].trim_end()), current_pos).into());
     }
 }
 
-fn starts_with_identifier(line:&str) -> bool {
+fn starts_with_identifier(line: &str) -> bool {
     !line.is_empty() && starts_with_whitespace(line).is_none() && starts_with_symbol(line).is_none()
 }
 
@@ -85,6 +97,12 @@ fn starts_with_whitespace(line: &str) -> Option<usize> {
         }
     }
     None
+}
+
+const LINE_COMMENT: &str = "//";
+
+fn starts_with_line_comment(line: &str) -> bool {
+    line.starts_with(LINE_COMMENT)
 }
 
 fn starts_with_keyword(line: &str) -> Option<Keyword> {

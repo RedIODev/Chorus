@@ -5,24 +5,36 @@ use std::{
     io::{BufRead, Lines},
 };
 
-use strum::IntoEnumIterator;
+use strum::{IntoEnumIterator, VariantNames};
 
 use crate::{error::LexerError, helper::PausableIterAdapter};
 
 use super::{
-    tokenizer, CodeSource, FileCodeSource, FileCodeSourceImpl, IdentifierToken, Keyword,
-    KeywordToken, SourcePosition, Token, TokenResult, TokenStream,
+    tokenizer, CodeSource, CommentToken, CommentType, FileCodeSource, FileCodeSourceImpl,
+    IdentifierToken, Keyword, KeywordToken, SourcePosition, Token, TokenResult, TokenStream,
+    TokenTrait,
 };
 
 impl SourcePosition {
     pub fn new(row: u32, column: u32) -> Self {
         Self { line: row, column }
     }
+
+    pub(crate) fn new_line(&mut self) {
+        self.line += 1;
+        self.column = 0;
+    }
 }
 
 impl From<(u32, u32)> for SourcePosition {
     fn from(value: (u32, u32)) -> Self {
         SourcePosition::new(value.0, value.1)
+    }
+}
+
+impl Display for SourcePosition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:{}", self.line + 1, self.column + 1)
     }
 }
 
@@ -115,6 +127,7 @@ impl Keyword {
             K::Super => "super",
             K::Satisfies => "satisfies",
             K::Is => "is",
+            K::Not => "not",
             K::Alloc => "alloc",
             K::Implement => "implement",
             K::Ref => "ref",
@@ -125,7 +138,7 @@ impl Keyword {
     }
 }
 
-impl Token for KeywordToken {
+impl TokenTrait for KeywordToken {
     fn raw(&self) -> &str {
         self.keyword.raw()
     }
@@ -148,7 +161,7 @@ impl KeywordToken {
     }
 }
 
-impl Token for IdentifierToken {
+impl TokenTrait for IdentifierToken {
     fn raw(&self) -> &str {
         &self.raw
     }
@@ -167,18 +180,38 @@ impl IdentifierToken {
     }
 }
 
-impl<'a, CS> Iterator for TokenStream<CS>
+impl TokenTrait for CommentToken {
+    fn raw(&self) -> &str {
+        &self.raw
+    }
+
+    fn source_position(&self) -> SourcePosition {
+        self.source_position
+    }
+}
+
+impl CommentToken {
+    pub fn new(comment_type: CommentType, raw: Box<str>, source_position: SourcePosition) -> Self {
+        Self {
+            comment_type,
+            raw,
+            source_position,
+        }
+    }
+}
+
+impl<CS> Iterator for TokenStream<CS>
 where
     CS: CodeSource,
 {
-    type Item = Result<Box<dyn Token>, CS::Error>;
+    type Item = Result<Token, CS::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         tokenizer::next_token(self).into()
     }
 }
 
-impl<'a, CS> TokenStream<CS>
+impl<CS> TokenStream<CS>
 where
     CS: CodeSource,
 {
@@ -196,8 +229,8 @@ impl FileCodeSource for FileCodeSourceImpl {
     }
 }
 
-impl<E> From<Option<Box<dyn Token>>> for TokenResult<E> {
-    fn from(value: Option<Box<dyn Token>>) -> Self {
+impl<E> From<Option<Token>> for TokenResult<E> {
+    fn from(value: Option<Token>) -> Self {
         match value {
             Some(t) => Self::Some(t),
             None => Self::None,
@@ -205,13 +238,67 @@ impl<E> From<Option<Box<dyn Token>>> for TokenResult<E> {
     }
 }
 
-impl<E> Into<Option<Result<Box<dyn Token>, E>>> for TokenResult<E> {
-    fn into(self) -> Option<Result<Box<dyn Token>, E>> {
-        match self {
+impl<E> From<TokenResult<E>> for Option<Result<Token, E>> {
+    fn from(val: TokenResult<E>) -> Self {
+        match val {
             TokenResult::Some(t) => Some(Ok(t)),
             TokenResult::None => None,
             TokenResult::Err(e) => Some(Err(e)),
         }
+    }
+}
+
+impl From<KeywordToken> for Token {
+    fn from(value: KeywordToken) -> Self {
+        Self::Keyword(value)
+    }
+}
+
+impl From<IdentifierToken> for Token {
+    fn from(value: IdentifierToken) -> Self {
+        Self::Identifier(value)
+    }
+}
+
+impl From<CommentToken> for Token {
+    fn from(value: CommentToken) -> Self {
+        Self::Comment(value)
+    }
+}
+
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}[{}]@{}",
+            Token::VARIANTS[self.varient()],
+            self.raw(),
+            self.source_position()
+        )
+    }
+}
+
+impl TokenTrait for Token {
+    fn raw(&self) -> &str {
+        match self {
+            Token::Keyword(k) => k.raw(),
+            Token::Identifier(i) => i.raw(),
+            Token::Comment(c) => c.raw(),
+        }
+    }
+
+    fn source_position(&self) -> SourcePosition {
+        match self {
+            Token::Keyword(k) => k.source_position(),
+            Token::Identifier(i) => i.source_position(),
+            Token::Comment(c) => c.source_position(),
+        }
+    }
+}
+
+impl Token {
+    pub fn varient(&self) -> usize {
+        unsafe { *(self as *const Self as *const usize) }
     }
 }
 

@@ -1,18 +1,15 @@
-use std::{io::Result, fs::File};
+use std::{fs::File, io::Result};
 
-use lexer::{FileCodeSourceImpl, CodeSource};
-
-
+use lexer::{CodeSource, FileCodeSourceImpl};
 pub mod error;
-pub mod lexer;
 mod helper;
+pub mod lexer;
 
 fn main() -> Result<()> {
-    //rethink error handling 
+    //Decide post or prefixed types.
     let cs = FileCodeSourceImpl::new(File::open("./Testfile.ch")?);
     for token in cs.iter()? {
-        let token = token?;
-        println!("[{}]@{:?}", token.raw(), token.source_position())
+        println!("{}", token?)
     }
-   Ok(()) 
+    Ok(())
 }
