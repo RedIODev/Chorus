@@ -94,6 +94,7 @@ impl Keyword {
             K::At => "@",
             K::Namespace => "namespace",
             K::Import => "import",
+            K::Export => "export",
             K::Public => "public",
             K::Local => "local",
             K::Const => "const",

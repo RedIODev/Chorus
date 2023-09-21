@@ -59,6 +59,7 @@ pub enum Keyword {
     //word keywords
     Namespace,
     Import,
+    Export,
     Public,
     Local,
     Const,
