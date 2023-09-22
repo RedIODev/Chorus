@@ -90,7 +90,7 @@ pub enum Keyword {
     Unsigned,
     With,
     Where,
-    Super,
+    Default,
     Satisfies,
     Is,
     Not,

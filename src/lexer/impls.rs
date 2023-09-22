@@ -125,7 +125,7 @@ impl Keyword {
             K::Unsigned => "unsigned",
             K::With => "with",
             K::Where => "where",
-            K::Super => "super",
+            K::Default => "default",
             K::Satisfies => "satisfies",
             K::Is => "is",
             K::Not => "not",
