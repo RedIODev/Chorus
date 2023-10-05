@@ -4,6 +4,8 @@ use lexer::{CodeSource, FileCodeSourceImpl};
 pub mod error;
 mod helper;
 pub mod lexer;
+pub mod ast;
+mod tree;
 
 fn main() -> Result<()> {
     //Decide post or prefixed types.

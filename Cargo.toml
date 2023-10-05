@@ -11,3 +11,11 @@ strum_macros = "0.25"
 err-derive = "0.3.1"
 lazy_static = "1.4.0"
 unicode-segmentation = "1.10.1"
+refbox = "0.3.0"
+[dependencies.uuid]
+version = "1.4.1"
+features = [
+    "v4",                # Lets you generate random UUIDs
+    "fast-rng",          # Use a faster (but still sufficiently random) RNG
+    "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
+]
