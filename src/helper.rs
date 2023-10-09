@@ -100,318 +100,315 @@ impl Strlen for &str {
     }
 }
 
-pub mod tree {
-    use std::{
-        marker::PhantomData,
-        ops::{Deref, DerefMut},
-    };
+// pub mod tree {
+//     use std::{
+//         marker::PhantomData,
+//         ops::{Deref, DerefMut},
+//     };
 
-    use crate::error::BorrowError;
+//     use crate::error::BorrowError;
 
-    pub mod single {
-        pub type Root<T> = super::Root<T, T, T>;
-        pub type Branch<T> = super::Branch<T, T, T>;
-        pub type Leaf<T> = super::Leaf<T, T, T>;
-        pub type Container<T> = super::Container<T, T, T>;
-        pub type Contained<T> = super::Contained<T, T, T>;
-    }
+//     pub mod single {
+//         pub type Root<T> = super::Root<T, T, T>;
+//         pub type Branch<T> = super::Branch<T, T, T>;
+//         pub type Leaf<T> = super::Leaf<T, T, T>;
+//         pub type Container<T> = super::Container<T, T, T>;
+//         pub type Contained<T> = super::Contained<T, T, T>;
+//     }
 
-    pub struct Root<RT, BT, LT> {
-        children: Vec<Contained<RT, BT, LT>>,
-        data: RT,
-        borrow_state: BorrowState,
-    }
+//     pub struct Root<RT, BT, LT> {
+//         children: Vec<Contained<RT, BT, LT>>,
+//         data: RT,
+//         borrow_state: BorrowState,
+//     }
 
-    pub struct Branch<RT, BT, LT> {
-        parent: *mut Container<RT, BT, LT>,
-        children: Vec<Contained<RT, BT, LT>>,
-        data: BT,
-        borrow_state: BorrowState,
-    }
+//     pub struct Branch<RT, BT, LT> {
+//         parent: *mut Container<RT, BT, LT>,
+//         children: Vec<Contained<RT, BT, LT>>,
+//         data: BT,
+//         borrow_state: BorrowState,
+//     }
 
-    pub struct Leaf<RT, BT, LT> {
-        parent: *mut Container<RT, BT, LT>,
-        data: LT,
-    }
+//     pub struct Leaf<RT, BT, LT> {
+//         parent: *mut Container<RT, BT, LT>,
+//         data: LT,
+//     }
 
-    pub enum Container<RT, BT, LT> {
-        Root(Root<RT, BT, LT>),
-        Branch(Branch<RT, BT, LT>),
-    }
+//     pub enum Container<RT, BT, LT> {
+//         Root(Root<RT, BT, LT>),
+//         Branch(Branch<RT, BT, LT>),
+//     }
 
-    pub enum Contained<RT, BT, LT> {
-        Branch(Branch<RT, BT, LT>),
-        Leaf(Leaf<RT, BT, LT>),
-    }
+//     pub enum Contained<RT, BT, LT> {
+//         Branch(Branch<RT, BT, LT>),
+//         Leaf(Leaf<RT, BT, LT>),
+//     }
 
-    pub struct Ref<'a, T>
-    where
-        T: SafeBorrow,
-    {
-        ptr: *mut T,
-        _phantom_data: PhantomData<&'a T>,
-    }
+//     pub struct Ref<'a, T>
+//     where
+//         T: SafeBorrow,
+//     {
+//         ptr: *mut T,
+//         _phantom_data: PhantomData<&'a T>,
+//     }
 
-    pub struct RefMut<'a, T>
-    where
-        T: SafeBorrow,
-    {
-        ptr: *mut T,
-        _phantom_data: PhantomData<&'a T>,
-    }
+//     pub struct RefMut<'a, T>
+//     where
+//         T: SafeBorrow,
+//     {
+//         ptr: *mut T,
+//         _phantom_data: PhantomData<&'a T>,
+//     }
 
-    
-    pub trait SafeBorrow {
-        fn borrow_state(&mut self) -> &mut BorrowState;
-    }
+//     pub trait SafeBorrow {
+//         fn borrow_state(&mut self) -> &mut BorrowState;
+//     }
 
-    impl<'a, T> Ref<'a, T>
-    where
-        T: SafeBorrow,
-    {
-        fn new(ptr: *mut T) -> Self {
-            Ref::try_new(ptr).unwrap()
-        }
+//     impl<'a, T> Ref<'a, T>
+//     where
+//         T: SafeBorrow,
+//     {
+//         fn new(ptr: *mut T) -> Self {
+//             Ref::try_new(ptr).unwrap()
+//         }
 
-        fn try_new(ptr: *mut T) -> Result<Self, BorrowError> {
-            let borrow_state = unsafe { (&mut *ptr).borrow_state() };
-            match borrow_state {
-                BorrowState::NoBorrow => *borrow_state = BorrowState::Borrow(1),
-                BorrowState::Borrow(i) => *i += 1,
-                BorrowState::MutBorrow => return Err(BorrowError::InvalidImutableBorrow),
-            }
+//         fn try_new(ptr: *mut T) -> Result<Self, BorrowError> {
+//             let borrow_state = unsafe { (&mut *ptr).borrow_state() };
+//             match borrow_state {
+//                 BorrowState::NoBorrow => *borrow_state = BorrowState::Borrow(1),
+//                 BorrowState::Borrow(i) => *i += 1,
+//                 BorrowState::MutBorrow => return Err(BorrowError::InvalidImutableBorrow),
+//             }
 
-            Ok(Ref {
-                ptr,
-                _phantom_data: PhantomData,
-            })
-        }
-    }
+//             Ok(Ref {
+//                 ptr,
+//                 _phantom_data: PhantomData,
+//             })
+//         }
+//     }
 
-    impl<'a, T> Deref for Ref<'a, T>
-    where
-        T: SafeBorrow,
-    {
-        type Target = T;
+//     impl<'a, T> Deref for Ref<'a, T>
+//     where
+//         T: SafeBorrow,
+//     {
+//         type Target = T;
 
-        fn deref(&self) -> &Self::Target {
-            unsafe { &*self.ptr }
-        }
-    }
+//         fn deref(&self) -> &Self::Target {
+//             unsafe { &*self.ptr }
+//         }
+//     }
 
-    impl<'a, T> Drop for Ref<'a, T>
-    where
-        T: SafeBorrow,
-    {
-        fn drop(&mut self) {
-            let borrow_state = unsafe { (&mut *self.ptr).borrow_state() };
-            match borrow_state {
-                BorrowState::NoBorrow => unreachable!(),
-                BorrowState::Borrow(i) if *i > 1 => *i -= 1,
-                BorrowState::Borrow(i) if *i == 1 => *borrow_state = BorrowState::NoBorrow,
-                BorrowState::Borrow(i) if *i == 0 => unreachable!(),
-                BorrowState::Borrow(_) => unreachable!(),
-                BorrowState::MutBorrow => unreachable!(),
-            }
-        }
-    }
+//     impl<'a, T> Drop for Ref<'a, T>
+//     where
+//         T: SafeBorrow,
+//     {
+//         fn drop(&mut self) {
+//             let borrow_state = unsafe { (&mut *self.ptr).borrow_state() };
+//             match borrow_state {
+//                 BorrowState::NoBorrow => unreachable!(),
+//                 BorrowState::Borrow(i) if *i > 1 => *i -= 1,
+//                 BorrowState::Borrow(i) if *i == 1 => *borrow_state = BorrowState::NoBorrow,
+//                 BorrowState::Borrow(i) if *i == 0 => unreachable!(),
+//                 BorrowState::Borrow(_) => unreachable!(),
+//                 BorrowState::MutBorrow => unreachable!(),
+//             }
+//         }
+//     }
 
-    impl<'a, T> RefMut<'a, T>
-    where
-        T: SafeBorrow,
-    {
-        fn new(ptr: *mut T) -> Self {
-            RefMut::try_new(ptr).unwrap()
-        }
+//     impl<'a, T> RefMut<'a, T>
+//     where
+//         T: SafeBorrow,
+//     {
+//         fn new(ptr: *mut T) -> Self {
+//             RefMut::try_new(ptr).unwrap()
+//         }
 
-        fn try_new(ptr: *mut T) -> Result<Self, BorrowError> {
-            let borrow_state = unsafe { (&mut *ptr).borrow_state() };
-            match borrow_state {
-                BorrowState::NoBorrow => *borrow_state = BorrowState::MutBorrow,
-                BorrowState::Borrow(_) => return Err(BorrowError::InvalidMutableBorrow),
-                BorrowState::MutBorrow => return Err(BorrowError::InvalidSecondMutableBorrow),
-            }
+//         fn try_new(ptr: *mut T) -> Result<Self, BorrowError> {
+//             let borrow_state = unsafe { (&mut *ptr).borrow_state() };
+//             match borrow_state {
+//                 BorrowState::NoBorrow => *borrow_state = BorrowState::MutBorrow,
+//                 BorrowState::Borrow(_) => return Err(BorrowError::InvalidMutableBorrow),
+//                 BorrowState::MutBorrow => return Err(BorrowError::InvalidSecondMutableBorrow),
+//             }
 
-            Ok(RefMut {
-                ptr,
-                _phantom_data: PhantomData,
-            })
-        }
-    }
+//             Ok(RefMut {
+//                 ptr,
+//                 _phantom_data: PhantomData,
+//             })
+//         }
+//     }
 
-    impl<'a, T> Deref for RefMut<'a, T>
-    where
-        T: SafeBorrow,
-    {
-        type Target = T;
+//     impl<'a, T> Deref for RefMut<'a, T>
+//     where
+//         T: SafeBorrow,
+//     {
+//         type Target = T;
 
-        fn deref(&self) -> &Self::Target {
-            unsafe { &*self.ptr }
-        }
-    }
+//         fn deref(&self) -> &Self::Target {
+//             unsafe { &*self.ptr }
+//         }
+//     }
 
-    impl<'a, T> DerefMut for RefMut<'a, T>
-    where
-        T: SafeBorrow,
-    {
-        fn deref_mut(&mut self) -> &mut Self::Target {
-            unsafe { &mut *self.ptr }
-        }
-    }
+//     impl<'a, T> DerefMut for RefMut<'a, T>
+//     where
+//         T: SafeBorrow,
+//     {
+//         fn deref_mut(&mut self) -> &mut Self::Target {
+//             unsafe { &mut *self.ptr }
+//         }
+//     }
 
-    impl<'a, T> Drop for RefMut<'a, T>
-    where
-        T: SafeBorrow,
-    {
-        fn drop(&mut self) {
-            let borrow_state = unsafe { (&mut *self.ptr).borrow_state() };
-            match borrow_state {
-                BorrowState::NoBorrow => unreachable!(),
-                BorrowState::Borrow(_) => unreachable!(),
-                BorrowState::MutBorrow => *borrow_state = BorrowState::NoBorrow,
-            }
-        }
-    }
+//     impl<'a, T> Drop for RefMut<'a, T>
+//     where
+//         T: SafeBorrow,
+//     {
+//         fn drop(&mut self) {
+//             let borrow_state = unsafe { (&mut *self.ptr).borrow_state() };
+//             match borrow_state {
+//                 BorrowState::NoBorrow => unreachable!(),
+//                 BorrowState::Borrow(_) => unreachable!(),
+//                 BorrowState::MutBorrow => *borrow_state = BorrowState::NoBorrow,
+//             }
+//         }
+//     }
 
-    impl<RT, BT, LT> From<Root<RT, BT, LT>> for Container<RT, BT, LT> {
-        fn from(value: Root<RT, BT, LT>) -> Self {
-            Container::Root(value)
-        }
-    }
+//     impl<RT, BT, LT> From<Root<RT, BT, LT>> for Container<RT, BT, LT> {
+//         fn from(value: Root<RT, BT, LT>) -> Self {
+//             Container::Root(value)
+//         }
+//     }
 
-    impl<RT, BT, LT> From<Branch<RT, BT, LT>> for Container<RT, BT, LT> {
-        fn from(value: Branch<RT, BT, LT>) -> Self {
-            Container::Branch(value)
-        }
-    }
+//     impl<RT, BT, LT> From<Branch<RT, BT, LT>> for Container<RT, BT, LT> {
+//         fn from(value: Branch<RT, BT, LT>) -> Self {
+//             Container::Branch(value)
+//         }
+//     }
 
-    impl<RT, BT, LT> From<Branch<RT, BT, LT>> for Contained<RT, BT, LT> {
-        fn from(value: Branch<RT, BT, LT>) -> Self {
-            Contained::Branch(value)
-        }
-    }
+//     impl<RT, BT, LT> From<Branch<RT, BT, LT>> for Contained<RT, BT, LT> {
+//         fn from(value: Branch<RT, BT, LT>) -> Self {
+//             Contained::Branch(value)
+//         }
+//     }
 
-    impl<RT, BT, LT> From<Leaf<RT, BT, LT>> for Contained<RT, BT, LT> {
-        fn from(value: Leaf<RT, BT, LT>) -> Self {
-            Contained::Leaf(value)
-        }
-    }
+//     impl<RT, BT, LT> From<Leaf<RT, BT, LT>> for Contained<RT, BT, LT> {
+//         fn from(value: Leaf<RT, BT, LT>) -> Self {
+//             Contained::Leaf(value)
+//         }
+//     }
 
-    impl<RT, BT, LT> SafeBorrow for Container<RT, BT, LT> {
-        fn borrow_state(&mut self) -> &mut BorrowState {
-            match self {
-                Container::Root(r) => &mut r.borrow_state,
-                Container::Branch(b) => &mut b.borrow_state,
-            }
-        }
-    }
+//     impl<RT, BT, LT> SafeBorrow for Container<RT, BT, LT> {
+//         fn borrow_state(&mut self) -> &mut BorrowState {
+//             match self {
+//                 Container::Root(r) => &mut r.borrow_state,
+//                 Container::Branch(b) => &mut b.borrow_state,
+//             }
+//         }
+//     }
 
-    impl<RT, BT, LT> Container<RT, BT, LT> {
-        pub fn add_branch(&mut self, data: BT) {
-            let branch = unsafe { Branch::new(self, data) };
-            self.children_mut().push(branch.into());
-        }
+//     impl<RT, BT, LT> Container<RT, BT, LT> {
+//         pub fn add_branch(&mut self, data: BT) {
+//             let branch = unsafe { Branch::new(self, data) };
+//             self.children_mut().push(branch.into());
+//         }
 
-        pub fn add_leaf(&mut self, data: LT) {
-            let leaf = unsafe { Leaf::new(self, data) };
-            self.children_mut().push(leaf.into());
-        }
+//         pub fn add_leaf(&mut self, data: LT) {
+//             let leaf = unsafe { Leaf::new(self, data) };
+//             self.children_mut().push(leaf.into());
+//         }
 
-        pub fn children(&self) -> &Vec<Contained<RT, BT, LT>> {
-            match self {
-                Container::Root(r) => &r.children,
-                Container::Branch(b) => &b.children,
-            }
-        }
+//         pub fn children(&self) -> &Vec<Contained<RT, BT, LT>> {
+//             match self {
+//                 Container::Root(r) => &r.children,
+//                 Container::Branch(b) => &b.children,
+//             }
+//         }
 
-        pub fn children_mut(&mut self) -> &mut Vec<Contained<RT, BT, LT>> {
-            match self {
-                Container::Root(r) => &mut r.children,
-                Container::Branch(b) => &mut b.children,
-            }
-        }
-    }
+//         pub fn children_mut(&mut self) -> &mut Vec<Contained<RT, BT, LT>> {
+//             match self {
+//                 Container::Root(r) => &mut r.children,
+//                 Container::Branch(b) => &mut b.children,
+//             }
+//         }
+//     }
 
-    impl<RT, BT, LT> Contained<RT, BT, LT> {
-        pub fn parent(&self) -> Ref<'_, Container<RT, BT, LT>> {
-            //unsafe: unchecked multiple borrow from children
-            let parent = match self {
-                Contained::Branch(b) => b.parent,
-                Contained::Leaf(l) => l.parent,
-            };
-            Ref::new(parent)
-        }
+//     impl<RT, BT, LT> Contained<RT, BT, LT> {
+//         pub fn parent(&self) -> Ref<'_, Container<RT, BT, LT>> {
+//             //unsafe: unchecked multiple borrow from children
+//             let parent = match self {
+//                 Contained::Branch(b) => b.parent,
+//                 Contained::Leaf(l) => l.parent,
+//             };
+//             Ref::new(parent)
+//         }
 
-        pub fn parent_mut(&mut self) -> RefMut<'_, Container<RT, BT, LT>> {
-            let parent = match self {
-                Contained::Branch(b) => b.parent,
-                Contained::Leaf(l) => l.parent,
-            };
-            RefMut::new(parent)
-        }
+//         pub fn parent_mut(&mut self) -> RefMut<'_, Container<RT, BT, LT>> {
+//             let parent = match self {
+//                 Contained::Branch(b) => b.parent,
+//                 Contained::Leaf(l) => l.parent,
+//             };
+//             RefMut::new(parent)
+//         }
 
-        pub fn upgrade(&mut self)
-        where
-            LT: Into<BT>,
-        {
-            let Contained::Leaf(leaf) = self else {
-                return;
-            };
-            let mut branch = unsafe {
-                let mut leaf_data = std::mem::zeroed();
-                std::mem::swap(&mut leaf_data, &mut leaf.data);
-                Branch::new(leaf.parent, leaf_data.into()).into()
-            };
-            std::mem::swap(&mut branch, self);
-        }
-    }
+//         pub fn upgrade(&mut self)
+//         where
+//             LT: Into<BT>,
+//         {
+//             let Contained::Leaf(leaf) = self else {
+//                 return;
+//             };
+//             let mut branch = unsafe {
+//                 let mut leaf_data = std::mem::zeroed();
+//                 std::mem::swap(&mut leaf_data, &mut leaf.data);
+//                 Branch::new(leaf.parent, leaf_data.into()).into()
+//             };
+//             std::mem::swap(&mut branch, self);
+//         }
+//     }
 
-    impl<RT, BT, LT> Root<RT, BT, LT> {
-        pub fn new(data: RT) -> Self {
-            Self {
-                children: Vec::new(),
-                data,
-                borrow_state: BorrowState::NoBorrow,
-            }
-        }
+//     impl<RT, BT, LT> Root<RT, BT, LT> {
+//         pub fn new(data: RT) -> Self {
+//             Self {
+//                 children: Vec::new(),
+//                 data,
+//                 borrow_state: BorrowState::NoBorrow,
+//             }
+//         }
 
-        pub fn downgrade(self, parent: &mut Container<RT, BT, LT>)
-        where
-            RT: Into<BT>,
-        {
-            if self.borrow_state != BorrowState::NoBorrow {
-                panic!("cannot downgrade a borrowed root")
-            }
-            let branch = Branch {
-                parent,
-                children: self.children,
-                data: self.data.into(),
-                borrow_state: BorrowState::NoBorrow,
-            };
-            parent.children_mut().push(branch.into())
-        }
-    }
+//         pub fn downgrade(self, parent: &mut Container<RT, BT, LT>)
+//         where
+//             RT: Into<BT>,
+//         {
+//             if self.borrow_state != BorrowState::NoBorrow {
+//                 panic!("cannot downgrade a borrowed root")
+//             }
+//             let branch = Branch {
+//                 parent,
+//                 children: self.children,
+//                 data: self.data.into(),
+//                 borrow_state: BorrowState::NoBorrow,
+//             };
+//             parent.children_mut().push(branch.into())
+//         }
+//     }
 
-    impl<RT, BT, LT> Branch<RT, BT, LT> {
-        pub unsafe fn new(parent: *mut Container<RT, BT, LT>, data: BT) -> Self {
-            Self {
-                parent,
-                children: Vec::new(),
-                data,
-                borrow_state: BorrowState::NoBorrow,
-            }
-        }
-    }
+//     impl<RT, BT, LT> Branch<RT, BT, LT> {
+//         pub unsafe fn new(parent: *mut Container<RT, BT, LT>, data: BT) -> Self {
+//             Self {
+//                 parent,
+//                 children: Vec::new(),
+//                 data,
+//                 borrow_state: BorrowState::NoBorrow,
+//             }
+//         }
+//     }
 
-    impl<RT, BT, LT> Leaf<RT, BT, LT> {
-        pub unsafe fn new(parent: *mut Container<RT, BT, LT>, data: LT) -> Self {
-            Self { parent, data }
-        }
-    }
-}
+//     impl<RT, BT, LT> Leaf<RT, BT, LT> {
+//         pub unsafe fn new(parent: *mut Container<RT, BT, LT>, data: LT) -> Self {
+//             Self { parent, data }
+//         }
+//     }
+// }
 
+// pub mod parent_container {
 
-pub mod parent_container {
-    
-
-}
+// }
