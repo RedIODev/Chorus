@@ -12,8 +12,6 @@ impl<RT,BT,LT> Tree<RT,BT,LT> {
     
 }
 
-
-
 #[derive(Debug)]
 pub struct Root<RT, BT, LT> {
     children: Vec<RcBox<Child<RT, BT, LT>>>,

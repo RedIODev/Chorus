@@ -1,136 +1,213 @@
-use std::path::{Path, PathBuf};
+// mod tree {
+//     use crate::tree;
 
-use refbox::{Ref, RefBox};
+//     use super::{AstRootNode, AstBranchNode, AstLeafNode};
+//     pub type Root = tree::Root<AstRootNode, AstBranchNode, AstLeafNode>;
+//     pub type Branch = tree::Branch<AstRootNode, AstBranchNode, AstLeafNode>;
+//     pub type Leaf = tree::Leaf<AstRootNode, AstBranchNode, AstLeafNode>;
+// }
 
-use uuid::Uuid;
+use bitflags::bitflags;
 
-use crate::{lexer::Token, error::AstError};
-
-
-
-pub trait NodeTrait {
-    fn token(&self) -> Result<Vec<&Token>, AstError>;
+pub struct ParentPtr {
+    parent: *mut AstNode,
 }
-
-pub trait ContainerNodeTrait: NodeTrait {
-    fn children(&self) -> Result<&Vec<ContainedNode>, AstError>;
-    fn children_mut(&mut self) -> Result<&mut Vec<ContainedNode>, AstError>;
-}
-
-pub enum ContainerNode {
-    Root(Ref<RootNode>),
-    Branch(Ref<BranchNode>)
-}
-
-pub trait ContainedNodeTrait: NodeTrait {
-    fn parent(&self) -> Result<&ContainerNode, AstError>;
-    fn parent_mut(&mut self) -> Result<&mut ContainerNode, AstError>;
-}
-
-pub enum ContainedNode {
-    Branch(RefBox<BranchNode>),
-    Leaf(RefBox<LeafNode>)
-}
-
-pub struct RootNode {
-    pub(super) path:PathBuf,
-    pub(super) children:Vec<ContainedNode>
-}
-
-
-
-pub enum BranchNode {
-
-}
-
-pub enum LeafNode {
-
-}
-
-
-pub mod test {
-    use std::{path::PathBuf, rc::Rc};
-
-    use crate::lexer::Token;
-
-    pub type RcBox<T> = Rc<T>;
-
-    pub trait NodeTrait {
-        fn token(&self) -> Vec<&Token>;
-    }
-
-    pub struct RootNode {
-        pub path:PathBuf,
-        pub children:Vec<ContainedNode>
-    }
-
-    pub enum BranchNode {
-
-    }
-    
-    pub enum LeafNode {
-    
-    }
-
-    pub enum ContainerNode {
-        Root(RcBox<RootNode>),
-        Branch(RcBox<BranchNode>)
-    }
-
-    pub enum ContainedNode {
-        Branch(RcBox<BranchNode>),
-        Leaf(RcBox<LeafNode>)
-    }
-}
-
-
-
-
-///
-/// Old
-/// 
-
 
 pub trait AstNodeTrait {
     fn raw(&self) -> &str;
-    fn children(&self) -> &[&AstNodeOld];
-    fn parent(&self) -> Option<&AstNodeOld>;
 }
 
-#[derive(Debug)]
-pub enum AstNodeOld {
+pub trait Child {
+    fn parent(&self) -> &AstNode;
 
+    fn parent_mut(&mut self) -> &mut AstNode;
 }
 
-#[derive(Debug)]
-pub enum Visability {
-    Public,
+pub trait Parent {
+    fn children(&self) -> [&AstNode];
+
+    fn children_mut(&mut self) -> [&mut AstNode];
+}
+
+pub enum AccessModifier {
+    Default,
     Local,
-    Default
+    Public,
 }
 
-pub struct Constrain {
+pub enum AllocationLocation {
+    Heap,
+    Stack
+}
+
+pub enum ConstrainType {
+    Is,
+    Satisfies
+}
+
+bitflags! {
+    struct FuctionModifier: u8 {
+        const DYNAMIC = 0b00000001;
+        const INLINE = 0b00000010;
+        const UNSAFE = 0b00000100;
+
+    }
+}
+
+pub enum AstNode {
+    Namespace(NamespaceNode),
+    File(FileNode),
+    Field(FileNode),
+    UnnamedField(UnnamedFieldNode),
+    NamedField(NamedFieldNode),
+    GenericParameter(GenericParameterNode),
+    Type(TypeNode),
+    Struct(StructNode),
+    PrimitiveStruct(PrimitiveStructNode),
+    TupleStruct(TupleStructNode),
+    FieldStruct(FieldStructNode),
+    Interface(InterfaceNode),
+    Function(FunctionNode),
+    Implement(ImplementNode),
+}
+
+pub struct FileNode {
+    name: String,
+    namespaces: Vec<NamespaceNode>,
+    imports: Vec<ImportNode>,
+}
+
+pub struct NamespaceNode {
+    parent: ParentPtr,
+    name: String,
+}
+
+pub struct ImportNode {
+    parent: ParentPtr,
+    path: NamespaceNode,
+    r#type: Option<TypeNode>,
+    alias: Option<String>,
+}
+
+pub enum FieldNode {
+    Unnamed(UnnamedFieldNode),
+    Named(NamedFieldNode),
+}
+
+pub struct UnnamedFieldNode {
+    parent: ParentPtr,
+    r#type: TypeNode,
+    access_modifier: AccessModifier,
+    is_const: bool,
+    name: String,
+}
+
+pub struct NamedFieldNode {
+    field_node: UnnamedFieldNode,
+    name: String,
+}
+
+pub struct GenericParameterNode {
+    parent: ParentPtr,
+    name: String,
+    default: Option<Box<TypeNode>>,
+}
+
+pub enum ConstrainNode {
+    Generic(GenericContstrainNode),
+    AllocationContext(AllocationContextContrainNode)
+}
+
+pub struct GenericContstrainNode {
+    parent: ParentPtr,
+    target: GenericParameterNode,
+    constrain: InterfaceNode,
+    constrain_type: ConstrainType
+}
+
+pub struct AllocationContextContrainNode {
+    parent: ParentPtr,
+    target: AllocationContextNode,
+    constrain: AllocationContextNode,
+}
+
+pub struct AllocationContextNode {
+    parent: ParentPtr,
+    name: String,
+    allocation_location:AllocationLocation
 
 }
 
-pub struct GenericParameterAstNode {
-    raw: Box<str>,
-    ident: Identifier,
-    parent: Ref<AstNodeOld>
+pub enum TypeNode {
+    Struct(StructNode),
+    Interface(InterfaceNode),
+    Generic(GenericParameterNode),
 }
 
-pub struct Identifier {
-    uuid: Uuid,// based on path and name, recursive until root
-    name: Box<str>,
-    parent:Ref<AstNodeOld>,
-    path: Box<[Identifier]>
+pub enum StructNode {
+    Primitive(PrimitiveStructNode),
+    Tuple(TupleStructNode),
+    Field(FieldStructNode),
 }
 
-pub struct PrimitiveStructAstNode {
-    raw: Box<str>,
-    visability: Visability,
-    ident: Identifier,
-    bytes: u8,
+pub struct PrimitiveStructNode {
+    parent: ParentPtr,
     signed: bool,
-    generic_parameters: Box<[GenericParameterAstNode]>,
+    bits: u32,
+    access_modifier: AccessModifier,
+    name: String,
+}
+
+pub struct TupleStructNode {
+    parent: ParentPtr,
+    generic_parameters: Vec<GenericParameterNode>,
+    generic_constrains: Vec<GenericContstrainNode>,
+    fields: Vec<UnnamedFieldNode>,
+    access_modifier: AccessModifier,
+    name: String,
+}
+
+pub struct FieldStructNode {
+    parent: ParentPtr,
+    generic_parameters: Vec<GenericParameterNode>,
+    generic_constrains: Vec<GenericContstrainNode>,
+    fields: Vec<NamedFieldNode>,
+    access_modifier: AccessModifier,
+    name: String,
+}
+
+pub struct InterfaceNode {
+    parent: ParentPtr,
+    generic_parameters: Vec<GenericParameterNode>,
+    generic_constrains: Vec<GenericContstrainNode>,
+    access_modifier: AccessModifier,
+    functions: Vec<FunctionNode>,
+    name: String,
+
+}
+
+pub struct AnonymousTupleNode {
+    parent: ParentPtr,
+    fields: Vec<UnnamedFieldNode>
+}
+
+pub struct AnonymousUnionNode {
+    parent: ParentPtr,
+    varients: Vec<UnnamedFieldNode>,
+}
+
+pub struct FunctionNode {
+    parent: ParentPtr,
+    generic_parameters: Vec<GenericParameterNode>,
+    allocation_contexts: Vec<AllocationContextNode>,
+    constrains: Vec<ConstrainType>,
+    access_modifier: AccessModifier,
+    function_modifier: FuctionModifier,
+    parameters: Vec<NamedFieldNode>,
+    return_type: TypeNode,
+    //body: Option<FunctionbodyNode>,
+}
+
+pub struct ImplementNode {
+    parent: ParentPtr,
 }
