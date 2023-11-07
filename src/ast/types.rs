@@ -47,9 +47,9 @@ pub enum ConstrainType {
 
 bitflags! {
     struct FuctionModifier: u8 {
-        const DYNAMIC = 0b00000001;
-        const INLINE = 0b00000010;
-        const UNSAFE = 0b00000100;
+        const DYNAMIC = 1;
+        const INLINE = 1 << 1;
+        const UNSAFE = 1 << 2;
 
     }
 }
@@ -196,6 +196,36 @@ pub struct AnonymousUnionNode {
     varients: Vec<UnnamedFieldNode>,
 }
 
+pub enum StatementNode {
+    Assignment(AssignmentNode),
+    Scope(ScopeNode),
+    If(IfNode),
+    Else(ElseNode)
+}
+
+pub struct AssignmentNode {
+    parent: ParentPtr,
+    target: NamedFieldNode,
+    source: Box<StatementNode>,
+}
+
+pub struct ScopeNode {
+    parent: ParentPtr,
+    statements: Vec<StatementNode>
+}
+
+pub struct IfNode {
+    parent: ParentPtr,
+    condition: Box<StatementNode>,
+    body: Option<ScopeNode>,
+    r#else: Option<ElseNode>,
+}
+
+pub struct ElseNode {
+    parent: ParentPtr,
+    body: Option<ScopeNode>
+}
+
 pub struct FunctionNode {
     parent: ParentPtr,
     generic_parameters: Vec<GenericParameterNode>,
@@ -205,7 +235,7 @@ pub struct FunctionNode {
     function_modifier: FuctionModifier,
     parameters: Vec<NamedFieldNode>,
     return_type: TypeNode,
-    //body: Option<FunctionbodyNode>,
+    body: Option<ScopeNode>,
 }
 
 pub struct ImplementNode {
