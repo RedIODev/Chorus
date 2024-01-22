@@ -63,6 +63,7 @@ pub enum Keyword {
     Public,
     Local,
     Const,
+    Dynamic,
     Mut,
     Struct,
     Var,

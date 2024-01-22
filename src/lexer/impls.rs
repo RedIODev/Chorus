@@ -98,6 +98,7 @@ impl Keyword {
             K::Public => "public",
             K::Local => "local",
             K::Const => "const",
+            K::Dynamic => "dynamic",
             K::Mut => "mut",
             K::Struct => "struct",
             K::Var => "var",

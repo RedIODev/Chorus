@@ -37,21 +37,26 @@ pub enum AccessModifier {
 
 pub enum AllocationLocation {
     Heap,
-    Stack
+    Stack,
 }
 
 pub enum ConstrainType {
     Is,
-    Satisfies
+    Satisfies,
 }
 
 bitflags! {
-    struct FuctionModifier: u8 {
+    pub struct FuctionModifier: u8 {
         const DYNAMIC = 1;
         const INLINE = 1 << 1;
         const UNSAFE = 1 << 2;
+        const STAGED = 1 << 3;
 
     }
+}
+
+pub struct FunctionExtern {
+    api: String
 }
 
 pub enum AstNode {
@@ -115,14 +120,14 @@ pub struct GenericParameterNode {
 
 pub enum ConstrainNode {
     Generic(GenericContstrainNode),
-    AllocationContext(AllocationContextContrainNode)
+    AllocationContext(AllocationContextContrainNode),
 }
 
 pub struct GenericContstrainNode {
     parent: ParentPtr,
     target: GenericParameterNode,
     constrain: InterfaceNode,
-    constrain_type: ConstrainType
+    constrain_type: ConstrainType,
 }
 
 pub struct AllocationContextContrainNode {
@@ -134,8 +139,7 @@ pub struct AllocationContextContrainNode {
 pub struct AllocationContextNode {
     parent: ParentPtr,
     name: String,
-    allocation_location:AllocationLocation
-
+    allocation_location: AllocationLocation,
 }
 
 pub enum TypeNode {
@@ -183,12 +187,11 @@ pub struct InterfaceNode {
     access_modifier: AccessModifier,
     functions: Vec<FunctionNode>,
     name: String,
-
 }
 
 pub struct AnonymousTupleNode {
     parent: ParentPtr,
-    fields: Vec<UnnamedFieldNode>
+    fields: Vec<UnnamedFieldNode>,
 }
 
 pub struct AnonymousUnionNode {
@@ -196,11 +199,32 @@ pub struct AnonymousUnionNode {
     varients: Vec<UnnamedFieldNode>,
 }
 
+pub struct RangeNode {
+    parent: ParentPtr,
+    range_type: TypeNode,
+    lower_bound: FieldNode,
+    upper_bound: FieldNode,
+    lower_inclusive: bool,
+    upper_inclusive: bool,
+}
+
+pub struct LabelNode {
+    parent: ParentPtr,
+    name: String,
+}
+
 pub enum StatementNode {
     Assignment(AssignmentNode),
     Scope(ScopeNode),
     If(IfNode),
-    Else(ElseNode)
+    Else(ElseNode),
+    FunctionCall(FunctionCallNode),
+    While(WhileNode),
+    For(ForNode),
+    Return(ReturnNode),
+    Continue(ContinueNode),
+    Break(BreakNode),
+    Yield(YieldNode),
 }
 
 pub struct AssignmentNode {
@@ -211,7 +235,8 @@ pub struct AssignmentNode {
 
 pub struct ScopeNode {
     parent: ParentPtr,
-    statements: Vec<StatementNode>
+    statements: Vec<StatementNode>,
+    return_type: TypeNode
 }
 
 pub struct IfNode {
@@ -219,11 +244,65 @@ pub struct IfNode {
     condition: Box<StatementNode>,
     body: Option<ScopeNode>,
     r#else: Option<ElseNode>,
+    return_type: TypeNode
 }
 
 pub struct ElseNode {
     parent: ParentPtr,
-    body: Option<ScopeNode>
+    body: Option<ScopeNode>,
+}
+
+pub struct FunctionCallNode {
+    parent: ParentPtr,
+    generic_parameters: Vec<GenericParameterNode>,
+    allocation_contexts: Vec<AllocationContextNode>,
+    parameters: Vec<NamedFieldNode>,
+    return_type: TypeNode,
+}
+
+pub struct WhileNode {
+    parent: ParentPtr,
+    condition: Box<StatementNode>,
+    body: Option<ScopeNode>,
+    return_type: TypeNode,
+}
+
+pub struct ForNode {
+    parent: ParentPtr,
+    current_val: NamedFieldNode,
+    iter_source: Box<StatementNode>,
+    body: Option<ScopeNode>,
+    return_type: TypeNode,
+}
+
+pub struct ReturnNode {
+    parent: ParentPtr,
+    value: FieldNode,
+}
+
+pub struct ContinueNode {
+    parent: ParentPtr,
+    target: Option<LabelNode>,
+}
+
+pub struct BreakNode {
+    parent: ParentPtr,
+    target: Option<LabelNode>,
+}
+
+pub enum YieldNode {
+    Forward(ForwardYieldNode),
+    Braking(BrakingYieldNode),
+}
+
+pub struct ForwardYieldNode {
+    parent: ParentPtr,
+    value: FieldNode,
+}
+
+pub struct BrakingYieldNode {
+    parent: ParentPtr,
+    return_type: TypeNode,
 }
 
 pub struct FunctionNode {
@@ -233,6 +312,7 @@ pub struct FunctionNode {
     constrains: Vec<ConstrainType>,
     access_modifier: AccessModifier,
     function_modifier: FuctionModifier,
+    r#extern: Option<FunctionExtern>,
     parameters: Vec<NamedFieldNode>,
     return_type: TypeNode,
     body: Option<ScopeNode>,
@@ -240,4 +320,9 @@ pub struct FunctionNode {
 
 pub struct ImplementNode {
     parent: ParentPtr,
+    implementing_struct: StructNode,
+    generic_parameters: Vec<GenericParameterNode>,
+    generic_constrains: Vec<GenericContstrainNode>,
+    interfaces: Vec<InterfaceNode>,
+    functions: Vec<FunctionNode>,
 }
