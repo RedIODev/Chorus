@@ -5,7 +5,7 @@ public namespace MySpace {
 
     const NUMBER:u32 = 5;
 
-    public const inline unsafe fn mylocalfunc1<T>[a, b](t: Test) -> String {
+    public const inline unsafe fn mylocalfunc1<T>(t: Test) -> String {
         t+= 5;
         var ptr = &mut t;   //comment test
         ptr.s = "Hello";
@@ -17,7 +17,7 @@ interface AddAssign<T = Self> {
     fn addAssign(self: &mut Self, other: T);
 }
 
-implement MySpace: AddAssign {
+implement MySpace::Test: AddAssign {
     fn addAssign(self: &mut Self, other: T) {
         self.s += other.s
     }
@@ -33,7 +33,7 @@ fn forLoop(iter:Iterable) {
     }
 }
 
-fn func[a,b]<A,B>(a:A,b:B) -> C {
+fn func[x,y]<A,B>(a:A,b:B) -> C {
     
 }
 
