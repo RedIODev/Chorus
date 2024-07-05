@@ -1,21 +1,21 @@
+CC = gcc
+CFLAGS = -g -Wall
 
-TARGET ?= a.out
-SRC_DIRS ?= ./src
+SRC_DIR = src
+OBJ_DIR = obj
 
-SRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.c -or -name *.s)
-OBJS := $(addsuffix .o,$(basename $(SRCS)))
-DEPS := $(OBJS:.o=.d)
+SRCS = $(shell find * -name '*.c')
 
-INC_DIRS := $(shell find $(SRC_DIRS) -type d)
-INC_FLAGS := $(addprefix -I,$(INC_DIRS))
+OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+BIN = main
 
-CPPFLAGS ?= $(INC_FLAGS) -MMD -MP
+all: $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o main
 
-$(TARGET): $(OBJS)
-	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LOADLIBES) $(LDLIBS)
+$(OBJS): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c 
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+	@echo "Compiled "$<" successfully!"
 
-.PHONY: clean
 clean:
-	$(RM) $(TARGET) $(OBJS) $(DEPS)
-
--include $(DEPS)
+	$(RM) -r main $(OBJ_DIR)/*

@@ -23,7 +23,7 @@ implement MySpace: AddAssign {
     }
 }
 
-struct MyTuple(i32, f32);
+struct MyTuple(i32, f32);Testfile.ch
 
 struct u40: unsigned 5; //primitive unsigned 40 bit struct
 

@@ -4,6 +4,7 @@
         "stdint-gcc.h": "c",
         "float.h": "c",
         "stdlib.h": "c",
-        "object.h": "c"
+        "object.h": "c",
+        "string.h": "c"
     }
 }

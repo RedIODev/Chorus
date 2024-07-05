@@ -1,5 +1,5 @@
-#ifndef PRIMITIVE_H
-#define PRIMITIVE_H
+#ifndef UTILS_PRIMITIVE_H
+#define UTILS_PRIMITIVE_H
 #include <stdint.h>
 #include <float.h>
 #include <uchar.h>
