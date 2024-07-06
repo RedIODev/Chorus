@@ -3,18 +3,18 @@
 #include <string.h>
 #include "string.h"
 _Thread_local char *tl_message = NULL;
-_Thread_local u8 tl_code = ERROR_NO_ERROR;
+_Thread_local ErrorCode tl_code = ERROR_NO_ERROR;
 
 bool error(void) {
     return tl_code != ERROR_NO_ERROR;
 }
-u8 errorCode(void) {
+ErrorCode errorCode(void) {
     return tl_code;
 }
 const char *errorMessage(void) {
     return tl_message;
 }
-void setError(u8 code, const char *message) {
+void setError(ErrorCode code, const char *message) {
     tl_code = code;
     if (tl_message != NULL) {
         free(tl_message);

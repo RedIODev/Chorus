@@ -2,18 +2,17 @@
 #define UTILS_ERROR_H
 #include "primitive.h"
 
+typedef enum {
+    ERROR_NO_ERROR,
+    ERROR_FILE_OPEN,
+    ERROR_FILE_READ,
+    ERROR_INVALID_NODE_TYPE,
+} ErrorCode;
+
 bool error(void);
-u8 errorCode(void);
+ErrorCode errorCode(void);
 const char *errorMessage(void);
-void setError(u8, const char*);
+void setError(ErrorCode, const char*);
 void errorClear(void);
-
-//
-// ERROR_CODES
-//
-
-#define ERROR_NO_ERROR 0
-#define ERROR_PARSE_FILE_OPEN 1
-#define ERROR_INVALID_NODE_TYPE 2
 
 #endif
