@@ -15,6 +15,7 @@ void printStringEscaped(const char *string) {
                 break;
             case '\f':
                 tmp[i] = 'f';
+                break;
             case '\n':
                 tmp[i] = 'n';
                 break;
@@ -30,10 +31,10 @@ void printStringEscaped(const char *string) {
             case '\\':
                 tmp[i] = 'x';
                 break;
-            case '\s':
+            case (char)115:
                 tmp[i] = 's';
                 break;
-            case '\d':
+            case (char)100:
                 tmp[i] = 'd';
                 break;  
         }

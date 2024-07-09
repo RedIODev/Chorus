@@ -42,7 +42,7 @@ typedef struct {
 //
 
 void deleteNode(AstNode *);
-usize nodeToString(char *, usize, const AstNode *);
+u32 nodeToString(char *, usize, const AstNode *);
 
 AstNode *createFileNode(void);
 AstNode *createNamespaceNode(void);

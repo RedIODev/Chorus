@@ -5,13 +5,13 @@
 _Thread_local char *tl_message = NULL;
 _Thread_local ErrorCode tl_code = ERROR_NO_ERROR;
 
-bool error(void) {
+bool __attribute__((pure))error(void) {
     return tl_code != ERROR_NO_ERROR;
 }
-ErrorCode errorCode(void) {
+ErrorCode __attribute__((pure))errorCode(void) {
     return tl_code;
 }
-const char *errorMessage(void) {
+const char *__attribute__((pure))errorMessage(void) {
     return tl_message;
 }
 void setError(ErrorCode code, const char *message) {

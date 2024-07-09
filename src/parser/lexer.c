@@ -6,7 +6,7 @@
 #include "../utils/string.h"
 
 
-Keyword getKeywordFromLine(const char *line) {
+Keyword __attribute__((pure))getKeywordFromLine(const char *line) {
     //printStringEscaped(line);
     usize length = strlen(line);
     if (length == 0) {
@@ -265,7 +265,7 @@ u16 getKeywordLength(Keyword keyword) {
 
 #define BUFFER_SIZE 500
 
-bool isWhileSpaceExcludingNewline(char character) {
+bool __attribute__((pure))isWhileSpaceExcludingNewline(char character) {
     return isspace(character) && character != '\n';
 }
 
@@ -299,7 +299,7 @@ char *readLineFromFile(FILE *source) {
 
 
 
-bool isLineEmpty(const char *line) {
+bool __attribute__((pure))isLineEmpty(const char *line) {
     return strlen(line) == 0 || line[0] == '\n' || line[0] == '\0' || line[0] == '\r';
 }
 
@@ -377,7 +377,7 @@ void skipBlockComments(Tokenizer *tokenizer) {
     }
 }
 
-bool isLineComment(const char *line) {
+bool __attribute__((pure))isLineComment(const char *line) {
     if (line == NULL) {
         return false;
     }
@@ -391,7 +391,7 @@ bool isWhitespaceOrKeywordSymbol(const char *line) {
     return isspace(line[0]) || getKeywordLength(getKeywordFromLine(line)) == 1 || line[0] == '\0';
 }
 
-Tokenizer createTokenizer(FILE *source) {
+Tokenizer __attribute__((const))createTokenizer(FILE *source) {
     return (Tokenizer) { .line = NULL, .position = {.character = 0, .line = 0 }, .source = source };
 }
 

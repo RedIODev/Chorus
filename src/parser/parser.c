@@ -16,7 +16,7 @@ typedef struct {
 
 #define TOKENS_START_SIZE 10
 
-Tokens createTokens() {
+Tokens __attribute__((const)) createTokens() {
     Tokens tokens;
     tokens.capacity = 0;
     tokens.size = 0;
@@ -56,9 +56,7 @@ void deleteTokens(Tokens *tokens) {
 AstNode *parseFile(const char *filepath) {
     FILE *file = fopen(filepath, "r");
     if (file == NULL) {
-        char *msg;
-        STRCPY(msg, strerror(errno));
-        setError(ERROR_FILE_OPEN, msg);
+        setError(ERROR_FILE_OPEN, strerror(errno));
         return NULL;
     }
 
@@ -72,10 +70,10 @@ AstNode *parseFile(const char *filepath) {
     while (tryReadToken(&tokenizer, &token)) {
         switch (token.type) {
             case TOKEN_TYPE_KEYWORD:
-                printf("Token { x:%d, y:%d, keyword: %d}\n", token.position.line, token.position.character, token.keyword);
+                printf("Token { x:%d, y:%ld, keyword: %d}\n", token.position.line, token.position.character, token.keyword);
                 break;
             case TOKEN_TYPE_IDENTIFIER:
-                printf("Token { x:%d, y:%d, identifier: %s}\n", token.position.line, token.position.character, token.identifier.name);
+                printf("Token { x:%d, y:%ld, identifier: %s}\n", token.position.line, token.position.character, token.identifier.name);
                 break;
         }
         tokensAddToken(&tokens, token);

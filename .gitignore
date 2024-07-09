@@ -6,6 +6,6 @@
 
 /target
 /obj
-main
+main*
 valgrind*
 massif*

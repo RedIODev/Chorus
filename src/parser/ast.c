@@ -1,10 +1,11 @@
 #include "ast.h"
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 #include "../utils/error.h"
 
 
-const char *nodeTypeToString(NodeType type) {
+const char * __attribute__((const))nodeTypeToString(NodeType type) {
     switch (type) {
         case NODE_TYPE_FILE_ROOT:
             return "FileRoot";
@@ -15,7 +16,7 @@ const char *nodeTypeToString(NodeType type) {
     }
 }
 
-const char *accessModifierToString(AccessModifier modifier) {
+const char * __attribute__((const))accessModifierToString(AccessModifier modifier) {
     switch (modifier) {
         case ACCESS_MODIFIER_DEFAULT_PRIVATE:
             return "private(default)";
@@ -32,6 +33,14 @@ void handleInvalidNodeType(NodeType type) {
     char msg[30];
     snprintf(msg, 30, "Invalid Node type: %d", type);
     setError(ERROR_INVALID_NODE_TYPE, msg);
+}
+
+bool handleBufferWrite(i32 errorCode) {
+    if (errorCode < 0) {
+        setError(ERROR_BUFFER_WRITE, strerror(errno));
+        return true;
+    }
+    return false;
 }
 
 //
@@ -55,6 +64,7 @@ void deleteNode(AstNode *node) {
             break;
         case NODE_TYPE_NAMESPACE:
             deleteNamespaceNode(node);
+            break;
         default:
             handleInvalidNodeType(node->type);
             return;
@@ -66,33 +76,49 @@ void deleteNode(AstNode *node) {
 // Node ToString
 //
 
-usize fileNodeToString(char *buffer, usize length, const AstNode *node) {
+i32 fileNodeToString(char *buffer, usize length, const AstNode *node) {
     FileRootNode *fileData = GET_NODE_DATA(FileRootNode, node);
     return snprintf(buffer, length, "Filepath: \"%s\" }", fileData->path);
 }
 
-usize namespaceNodeToString(char *buffer, usize length, const AstNode *node) {
+i32 namespaceNodeToString(char *buffer, usize length, const AstNode *node) {
     NamespaceNode *namespaceData = GET_NODE_DATA(NamespaceNode, node);
     return snprintf(buffer, length, "Name: %s, AccessModifier: %s", namespaceData->name, accessModifierToString(namespaceData->accessModifier));
 }
 
-usize nodeToString(char *buffer, usize length, const AstNode *node) {
+u32 nodeToString(char *buffer, usize length, const AstNode *node) {
     const char *parentType = "NULL";
     if (node->parent != NULL) {
         parentType = nodeTypeToString(node->parent->type);
     }
 
-    usize end = snprintf(buffer, length, "%sNode { Parent: %s, Children: [%ld], ", nodeTypeToString(node->type), parentType, node->children_n);
+    i32 errorResult = snprintf(buffer, length, "%sNode { Parent: %s, Children: [%ld], ", nodeTypeToString(node->type), parentType, node->children_n);
+
+    if (handleBufferWrite(errorResult)) {
+        return 0;
+    }
+    u32 messageEnd = (u32)errorResult;
 
     switch(node->type) {
         case NODE_TYPE_FILE_ROOT:
-            end += fileNodeToString(buffer + end, length - end, node);
+            errorResult = fileNodeToString(buffer + messageEnd, length - messageEnd, node);
+            if (handleBufferWrite(errorResult)) {
+                return 0;
+            }
+            messageEnd += (u32)errorResult;
+            break;
+        case NODE_TYPE_NAMESPACE:
+            errorResult = namespaceNodeToString(buffer + messageEnd, length - messageEnd, node);
+            if (handleBufferWrite(errorResult)) {
+                return 0;
+            }
+            messageEnd += (u32)errorResult;
             break;
         default:
             handleInvalidNodeType(node->type);
-            return end;
+            return messageEnd;
     }
-    return end;
+    return messageEnd;
 }
 
 AstNode *createFileNode(void) {

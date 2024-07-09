@@ -9,6 +9,7 @@ typedef enum {
     ERROR_INVALID_NODE_TYPE,
     ERROR_NULL_POINTER_ARGUMENT,
     ERROR_INVALID_KEYWORD,
+    ERROR_BUFFER_WRITE,
 } ErrorCode;
 
 bool error(void);

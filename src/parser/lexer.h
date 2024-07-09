@@ -10,7 +10,7 @@ typedef enum {
 
 typedef struct {
     u32 line;
-    u32 character;
+    usize character;
 } SourcePosition;
 
 typedef enum {
