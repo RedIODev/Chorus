@@ -32,7 +32,7 @@ void tokensAddToken(Tokens *tokens,Token token) {
     }
     if (tokens->capacity <= tokens->size) { //grow array
         tokens->capacity += (tokens->capacity / 2);
-        printf("Tokens capacity: %ld, size:%ld\n", tokens->capacity, tokens->size);
+        //printf("Tokens capacity: %ld, size:%ld\n", tokens->capacity, tokens->size);
         tokens->data = realloc(tokens->data, sizeof(Token) * tokens->capacity);
     }
     tokens->data[tokens->size++] = token;
