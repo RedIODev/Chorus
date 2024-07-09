@@ -5,7 +5,7 @@ public namespace MySpace {
 
     const NUMBER:u32 = 5;
 
-    public const inline unsafe fn mylocalfunc1<T>[a, b](t: Test) -> String {
+    public const inline unsafe fn mylocalfunc1<T>(t: Test) -> String {
         t+= 5;
         var ptr = &mut t;   //comment test
         ptr.s = "Hello";
@@ -23,7 +23,7 @@ implement MySpace: AddAssign {
     }
 }
 
-struct MyTuple(i32, f32);Testfile.ch
+struct MyTuple(i32, f32);
 
 struct u40: unsigned 5; //primitive unsigned 40 bit struct
 
@@ -33,10 +33,9 @@ fn forLoop(iter:Iterable) {
     }
 }
 
-fn func[a,b]<A,B>(a:A,b:B) -> C {
-    
-}
-
+fn func[a,b]<A,B>(a:A,b:B) -> C {/*
+    hellp
+*/}
 interface Alloc<P = (), R = Self>
 where P is Tuple {
     fn alloc(params: P) -> R {

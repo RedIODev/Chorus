@@ -342,6 +342,41 @@ char *nextLineFromTokenizer(Tokenizer *tokenizer) {
     return tokenizer->line + tokenizer->position.character; // rest of line.
 }
 
+bool foundBlockCommentEnd(Tokenizer *tokenizer) {
+    char *line = tokenizer->line + tokenizer->position.character;
+    for (usize i = 0; line[i+1] != '\0'; i++) {
+        if (line[i] == '*' && line[i+1] =='/') {
+            tokenizer->position.character += i + 2;
+            return true;
+        }
+    }
+    return false;
+}
+
+void skipBlockComments(Tokenizer *tokenizer) {
+    char *line = tokenizer->line + tokenizer->position.character;
+    if (strlen(line) < 2) {
+        return;
+    }
+    if (line[0] != '/' && line[1] != '*') {
+        return;
+    }
+    if (foundBlockCommentEnd(tokenizer)) {
+        return;
+    }
+    while (true) {
+        tokenizer->position.character = strlen(tokenizer->line);
+        line = nextLineFromTokenizer(tokenizer);
+        if (line == NULL) {
+            return;
+        }
+        //printf("Comment Line: %d: %s\n", tokenizer->position.line, tokenizer->line);
+        if (foundBlockCommentEnd(tokenizer)) {
+            return;
+        }
+    }
+}
+
 bool isLineComment(const char *line) {
     if (line == NULL) {
         return false;
@@ -374,7 +409,8 @@ bool tryReadToken(Tokenizer *tokenizer, Token *out) {
         return false;
     }
     // todo: skip block comments
-    
+    skipBlockComments(tokenizer);
+    line = nextLineFromTokenizer(tokenizer);
     //printStringEscaped(line);
     Keyword keyword = getKeywordFromLine(line);
     if (keyword != NOT_KEYWORD) {

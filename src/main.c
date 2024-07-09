@@ -14,8 +14,8 @@ int main(int argc, char const *argv[])
     }
 
     char buffer[500];
-    nodeToString(buffer, 500, root);
-    printf(buffer);
+    //nodeToString(buffer, 500, root);
+    //printf(buffer);
 
     destroyNode(root);
 }

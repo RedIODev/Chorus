@@ -23,12 +23,8 @@ AstNode *parseFile(const char *filepath) {
     STRCPY(fileRootData->path, filepath);
    
     Tokenizer tokenizer = createTokenizer(file);
-    bool success = true;
-    while (success) {
-        Token token;
-        success = tryReadToken(&tokenizer, &token);
-
-        
+    Token token;
+    while (tryReadToken(&tokenizer, &token)) {
         switch (token.type) {
             case TOKEN_TYPE_KEYWORD:
                 printf("Token { x:%d, y:%d, keyword: %d}\n", token.position.line, token.position.character, token.keyword);
