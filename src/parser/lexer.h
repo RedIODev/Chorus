@@ -14,6 +14,7 @@ typedef struct {
 } SourcePosition;
 
 typedef enum {
+    //INSERT NEW KEYWORD AT FRONT OF BLOCK!!
     NOT_KEYWORD,
     //symbols
     KEYWORD_BRACKET_ROUND_OPEN,
@@ -63,6 +64,7 @@ typedef enum {
     KEYWORD_ELSE,
     KEYWORD_ENUM,
     KEYWORD_WITH,
+    KEYWORD_SSELF,
     KEYWORD_SELF,
     // 5 letter keywords
     KEYWORD_LOCAL,
@@ -118,7 +120,7 @@ typedef struct {
     SourcePosition position;
 } Tokenizer;
 
-Tokenizer initTokenizer(FILE *);
+Tokenizer createTokenizer(FILE *);
 
 bool tryReadToken(Tokenizer *, Token *);
 

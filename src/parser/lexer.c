@@ -1,10 +1,13 @@
 #include "lexer.h"
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "../utils/error.h"
+#include "../utils/string.h"
 
 
-Keyword getKeyword(const char *line) {
+Keyword getKeywordFromLine(const char *line) {
+    //printStringEscaped(line);
     usize length = strlen(line);
     if (length == 0) {
         return NOT_KEYWORD;
@@ -106,6 +109,9 @@ Keyword getKeyword(const char *line) {
     if (length >= 4) {
         if (strncmp("self", line, 4) == 0) {
             return KEYWORD_SELF;
+        }
+        if (strncmp("Self", line, 4) == 0) {
+            return KEYWORD_SSELF;
         }
         if (strncmp("with", line, 4) == 0) {
             return KEYWORD_WITH;
@@ -220,66 +226,183 @@ Keyword getKeyword(const char *line) {
     }
 }
 
+u16 getKeywordLength(Keyword keyword) {
+    if (keyword == NOT_KEYWORD) {
+        return 0;
+    }
+    if (keyword <= KEYWORD_AT) {
+        return 1;
+    }
+    if (keyword <= KEYWORD_IS) {
+        return 2;
+    }
+    if (keyword <= KEYWORD_REF) {
+        return 3;
+    }
+    if (keyword <= KEYWORD_SELF) {
+        return 4;
+    }
+    if (keyword <= KEYWORD_WHERE) {
+        return 5;
+    }
+    if (keyword <= KEYWORD_E__FILE) {
+        return 6;
+    }
+    if (keyword <= KEYWORD_DEFAULT) {
+        return 7;
+    }
+    if (keyword <= KEYWORD_UNSIGNED) {
+        return 8;
+    }
+    if (keyword <= KEYWORD_IMPLEMENT) {
+        return 9;
+    }
+    char msg[50];
+    snprintf(msg, 50, "Invalid keyword:%d", keyword);
+    setError(ERROR_INVALID_KEYWORD, msg);
+    return 0;
+}
+
 #define BUFFER_SIZE 500
 
-    char *readLine(FILE *source) {
-        char buffer[BUFFER_SIZE];
-        char *result = NULL;
-        usize resultLength = 0;
-        usize bufferLength = 0;
-        fscanf(source, " ");
-        do {
-            if (fgets(buffer, BUFFER_SIZE, source) == NULL) {
-                if (feof(source)) {
-                    return result;
-                }
-                char msg[100];
-                snprintf(msg, 100, "Read error occured: %d", ferror(source));
-                setError(ERROR_FILE_READ, msg);
-                free(result);
+bool isWhileSpaceExcludingNewline(char character) {
+    return isspace(character) && character != '\n';
+}
+
+char *readLineFromFile(FILE *source) {
+    if (source == NULL) {
+        setError(ERROR_NULL_POINTER_ARGUMENT, "readLineFromFile(FILE *source): source was null.");
+        return NULL;
+    }
+    char buffer[BUFFER_SIZE];
+    char *result = NULL;
+    usize resultLength = 0;
+    usize bufferLength = 0;
+    do {
+        if (fgets(buffer, BUFFER_SIZE, source) == NULL) {
+            if (feof(source)) {
+                return result;
+            }
+            char msg[100];
+            snprintf(msg, 100, "Read error occured: %d", ferror(source));
+            setError(ERROR_FILE_READ, msg);
+            free(result);
+            return NULL;
+        }
+        bufferLength = strlen(buffer);
+        result = realloc(result, resultLength + bufferLength + 1);
+        strcpy(result + resultLength, buffer);
+        resultLength += bufferLength;
+    } while (bufferLength == BUFFER_SIZE - 1 && buffer[BUFFER_SIZE - 2] != '\n');
+    return result;
+}
+
+
+
+bool isLineEmpty(const char *line) {
+    return strlen(line) == 0 || line[0] == '\n' || line[0] == '\0' || line[0] == '\r';
+}
+
+void skipWhitespace(Tokenizer *tokenizer) {
+    while (tokenizer->line[tokenizer->position.character] != '\0') {
+        if (!isspace(tokenizer->line[tokenizer->position.character])) {
+            break;
+        }
+        tokenizer->position.character++;
+    } 
+}
+
+char *nextLineFromTokenizer(Tokenizer *tokenizer) {
+    if (tokenizer->line == NULL) {  //first line.
+        char *line = readLineFromFile(tokenizer->source);
+        if (line == NULL) {
+            return NULL;
+        }
+        tokenizer->line = line;
+        tokenizer->position = (SourcePosition) { .line = 0, .character = 0 };
+        skipWhitespace(tokenizer);
+    }
+    if (isLineEmpty(tokenizer->line + tokenizer->position.character)) { //previous line empty.
+        while (isLineEmpty(tokenizer->line + tokenizer->position.character)) {
+            char *line = readLineFromFile(tokenizer->source);
+            if (line == NULL) {
                 return NULL;
             }
-            bufferLength = strlen(buffer);
-            result = realloc(result, resultLength + bufferLength + 1);
-            strcpy(result + resultLength, buffer);
-            resultLength += bufferLength;
-        } while (bufferLength == BUFFER_SIZE - 1 && buffer[BUFFER_SIZE - 2] != '\n');
-        return result;
-    }
-
-    Tokenizer initTokenizer(FILE *source) {
-        Tokenizer tokenizer;
-        tokenizer.source = source;
-        tokenizer.line = NULL;
-        tokenizer.position = (SourcePosition) { .line = -1, .character = 0 };
-        return tokenizer;
-    }
-
-
-    bool moveLine(Tokenizer *tokenizer) {
-            char *line = readLine(tokenizer->source);
-            if (line == NULL) {
-                return false;
-            }
+            free(tokenizer->line); // free previous line.
             tokenizer->line = line;
             tokenizer->position.line++;
-            return true;
+            tokenizer->position.character = 0;
+            skipWhitespace(tokenizer);
+        }
+        return tokenizer->line + tokenizer->position.character;
     }
+    //printf("LINE:{%s}\n", tokenizer->line);
+    skipWhitespace(tokenizer);
 
-    bool tryReadToken(Tokenizer *tokenizer, Token *out) {
-        if (tokenizer->line == NULL) {  // first line
-            if (!moveLine(tokenizer)) {
-                return false;
-            }
-        }
-        // todo: change to do this before every keyword find attempt.
-        if (strlen(tokenizer->line) >= 2) {
-            while (tokenizer->line[0] == '/' && tokenizer->line[1] == '/') {
-                if (!moveLine(tokenizer)) {
-                    return false;
-                }
-            }
+    return tokenizer->line + tokenizer->position.character; // rest of line.
+}
 
+bool isLineComment(const char *line) {
+    if (line == NULL) {
+        return false;
+    }
+    if (strlen(line) < 2) {
+        return false;
+    } 
+    return line[0] == '/' && line[1] == '/';
+}
+
+bool isWhitespaceOrKeywordSymbol(const char *line) {
+    return isspace(line[0]) || getKeywordLength(getKeywordFromLine(line)) == 1 || line[0] == '\0';
+}
+
+Tokenizer createTokenizer(FILE *source) {
+    return (Tokenizer) { .line = NULL, .position = {.character = 0, .line = 0 }, .source = source };
+}
+
+
+bool tryReadToken(Tokenizer *tokenizer, Token *out) {
+    char *line;
+    while (true) {  //skip line comments
+        line = nextLineFromTokenizer(tokenizer);
+        if (!isLineComment(line)) {
+            break;
         }
+        tokenizer->position.character += strlen(line);
+    }
+    if (line == NULL) {
+        return false;
+    }
+    // todo: skip block comments
+    
+    //printStringEscaped(line);
+    Keyword keyword = getKeywordFromLine(line);
+    if (keyword != NOT_KEYWORD) {
+        u16 keywordLength = getKeywordLength(keyword);
+        if (keywordLength == 0) {
+            return false;
+        } 
+        Token token;
+        token.position = tokenizer->position;
+        token.type = TOKEN_TYPE_KEYWORD;
+        token.keyword = keyword;
+        *out = token;
+        tokenizer->position.character += keywordLength;
         return true;
     }
+    u32 identifierLength = 0;
+    while (!isWhitespaceOrKeywordSymbol(line + identifierLength)) {
+        identifierLength++;
+    }
+
+    Token token;
+    token.position = tokenizer->position;
+    token.type = TOKEN_TYPE_IDENTIFIER;
+    char *identifierName = malloc(identifierLength + 1);
+    memcpy(identifierName, line, identifierLength);
+    identifierName[identifierLength] = '\0';
+    token.identifier = (Identifier) { .name = identifierName};
+    *out = token;
+    tokenizer->position.character += identifierLength;
+    return true;
+}

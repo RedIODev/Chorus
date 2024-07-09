@@ -7,6 +7,8 @@ typedef enum {
     ERROR_FILE_OPEN,
     ERROR_FILE_READ,
     ERROR_INVALID_NODE_TYPE,
+    ERROR_NULL_POINTER_ARGUMENT,
+    ERROR_INVALID_KEYWORD,
 } ErrorCode;
 
 bool error(void);
