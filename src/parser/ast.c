@@ -38,23 +38,23 @@ void handleInvalidNodeType(NodeType type) {
 // Node Destruction
 //
 
-void destroyFileNode(AstNode *node) {
+void deleteFileNode(AstNode *node) {
     FileRootNode *fileData = GET_NODE_DATA(FileRootNode, node);
     free(fileData->path);
 }
 
-void destroyNamespaceNode(AstNode *node) {
+void deleteNamespaceNode(AstNode *node) {
     NamespaceNode *namespaceData = GET_NODE_DATA(NamespaceNode, node);
     free(namespaceData->name);
 }
 
-void destroyNode(AstNode *node) {
+void deleteNode(AstNode *node) {
     switch(node->type) {
         case NODE_TYPE_FILE_ROOT:
-            destroyFileNode(node);
+            deleteFileNode(node);
             break;
         case NODE_TYPE_NAMESPACE:
-            destroyNamespaceNode(node);
+            deleteNamespaceNode(node);
         default:
             handleInvalidNodeType(node->type);
             return;

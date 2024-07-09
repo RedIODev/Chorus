@@ -7,3 +7,5 @@
 /target
 /obj
 main
+valgrind*
+massif*

@@ -124,4 +124,6 @@ Tokenizer createTokenizer(FILE *);
 
 bool tryReadToken(Tokenizer *, Token *);
 
+void deleteTokenizer(Tokenizer *);
+
 #endif

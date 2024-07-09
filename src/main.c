@@ -13,9 +13,10 @@ int main(int argc, char const *argv[])
         printf("%s\n", errorMessage());
     }
 
-    char buffer[500];
+    //char buffer[500];
     //nodeToString(buffer, 500, root);
     //printf(buffer);
 
-    destroyNode(root);
+    // 1073741816
+    deleteNode(root);
 }

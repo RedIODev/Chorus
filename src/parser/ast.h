@@ -41,7 +41,7 @@ typedef struct {
 // Functions
 //
 
-void destroyNode(AstNode *);
+void deleteNode(AstNode *);
 usize nodeToString(char *, usize, const AstNode *);
 
 AstNode *createFileNode(void);

@@ -442,3 +442,10 @@ bool tryReadToken(Tokenizer *tokenizer, Token *out) {
     tokenizer->position.character += identifierLength;
     return true;
 }
+
+void deleteTokenizer(Tokenizer *tokenizer) {
+    tokenizer->source = NULL;
+    free(tokenizer->line);
+    tokenizer->line = NULL;
+    tokenizer->position = (SourcePosition) { 0 };
+}

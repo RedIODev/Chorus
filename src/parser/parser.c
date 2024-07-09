@@ -8,6 +8,50 @@
 #include "../utils/string.h"
 #include "lexer.h"
 
+typedef struct {
+    Token *data;
+    usize size;
+    usize capacity;
+} Tokens;
+
+#define TOKENS_START_SIZE 10
+
+Tokens createTokens() {
+    Tokens tokens;
+    tokens.capacity = 0;
+    tokens.size = 0;
+    tokens.data = NULL;
+    return tokens;
+}
+
+void tokensAddToken(Tokens *tokens,Token token) {
+    if (tokens->data == NULL) {
+        tokens->data = malloc(sizeof(Token) * TOKENS_START_SIZE);
+        tokens->capacity = TOKENS_START_SIZE;
+        tokens->size = 0;
+    }
+    if (tokens->capacity <= tokens->size) { //grow array
+        tokens->capacity += (tokens->capacity / 2);
+        printf("Tokens capacity: %ld, size:%ld\n", tokens->capacity, tokens->size);
+        tokens->data = realloc(tokens->data, sizeof(Token) * tokens->capacity);
+    }
+    tokens->data[tokens->size++] = token;
+    
+}
+
+void deleteTokens(Tokens *tokens) {
+    for (usize i = 0; i < tokens->size; i++) {
+        Token token = tokens->data[i];
+        if (token.type == TOKEN_TYPE_IDENTIFIER) {
+            free(token.identifier.name);
+        }
+    }
+    
+    tokens->capacity = 0;
+    tokens->size = 0;
+    free(tokens->data);
+    tokens->data = NULL;
+}
 
 AstNode *parseFile(const char *filepath) {
     FILE *file = fopen(filepath, "r");
@@ -23,6 +67,7 @@ AstNode *parseFile(const char *filepath) {
     STRCPY(fileRootData->path, filepath);
    
     Tokenizer tokenizer = createTokenizer(file);
+    Tokens tokens = createTokens();
     Token token;
     while (tryReadToken(&tokenizer, &token)) {
         switch (token.type) {
@@ -33,14 +78,13 @@ AstNode *parseFile(const char *filepath) {
                 printf("Token { x:%d, y:%d, identifier: %s}\n", token.position.line, token.position.character, token.identifier.name);
                 break;
         }
-        if (token.type == TOKEN_TYPE_IDENTIFIER) {
-            free(token.identifier.name);
-        }
+        tokensAddToken(&tokens, token);
     }
     if (error()) {
         printf(errorMessage());
     }
-
+    deleteTokenizer(&tokenizer);
+    deleteTokens(&tokens);
     fclose(file);
     errorClear();
     return root;
