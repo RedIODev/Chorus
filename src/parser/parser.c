@@ -16,14 +16,6 @@ typedef struct {
 
 #define TOKENS_START_SIZE 10
 
-Tokens __attribute__((const)) createTokens() {
-    Tokens tokens;
-    tokens.capacity = 0;
-    tokens.size = 0;
-    tokens.data = NULL;
-    return tokens;
-}
-
 void tokensAddToken(Tokens *tokens,Token token) {
     if (tokens->data == NULL) {
         tokens->data = malloc(sizeof(Token) * TOKENS_START_SIZE);
@@ -53,37 +45,40 @@ void deleteTokens(Tokens *tokens) {
     tokens->data = NULL;
 }
 
-AstNode *parseFile(const char *filepath) {
+Tokens readTokens(const char *filepath) {
     FILE *file = fopen(filepath, "r");
     if (file == NULL) {
         setError(ERROR_FILE_OPEN, strerror(errno));
-        return NULL;
+        return (Tokens){0};
     }
 
-    AstNode *root = createFileNode();
+    Tokenizer tokensizer = {0};
+    tokensizer.source = file;
+    Tokens tokens = {0};
+    Token token;
+    while (tryReadToken(&tokensizer, &token)) {
+        tokensAddToken(&tokens, token);
+    }
+
+    deleteTokenizer(&tokensizer);
+    fclose(file);
+    return tokens;
+}
+
+AstNode *parseFile(const char *filepath) {
+    AstNode *root = createNode(NODE_TYPE_FILE_ROOT);
     FileRootNode *fileRootData = GET_NODE_DATA(FileRootNode, root);
     STRCPY(fileRootData->path, filepath);
    
-    Tokenizer tokenizer = createTokenizer(file);
-    Tokens tokens = createTokens();
-    Token token;
-    while (tryReadToken(&tokenizer, &token)) {
-        switch (token.type) {
-            case TOKEN_TYPE_KEYWORD:
-                printf("Token { x:%d, y:%ld, keyword: %d}\n", token.position.line, token.position.character, token.keyword);
-                break;
-            case TOKEN_TYPE_IDENTIFIER:
-                printf("Token { x:%d, y:%ld, identifier: %s}\n", token.position.line, token.position.character, token.identifier.name);
-                break;
-        }
-        tokensAddToken(&tokens, token);
-    }
+    Tokens tokens = readTokens(filepath);
     if (error()) {
-        printf(errorMessage());
+        deleteNode(root);
+        deleteTokens(&tokens);
+        return NULL;
     }
-    deleteTokenizer(&tokenizer);
+
+    //parse Ast.
+
     deleteTokens(&tokens);
-    fclose(file);
-    errorClear();
     return root;
 }

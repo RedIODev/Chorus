@@ -10,6 +10,7 @@
 typedef enum {
     NODE_TYPE_FILE_ROOT,
     NODE_TYPE_NAMESPACE,
+    NODE_TYPE_IMPORT,
 } NodeType;
 
 typedef enum {
@@ -19,6 +20,11 @@ typedef enum {
 
 } AccessModifier;
 
+typedef struct {
+    char *name;
+    char **arguments;
+    usize arguments_n;
+} Attribute;
 
 typedef struct AstNode {
     struct AstNode *parent;
@@ -35,17 +41,25 @@ typedef struct {
 typedef struct {
     char *name;
     AccessModifier accessModifier;
+    Attribute *attributes;
+    usize attributes_n;
 } NamespaceNode;
+
+typedef struct {
+    Attribute *attributes;
+    usize attributes_n;
+    char **namespacePath;
+    usize namespacePath_n;
+} ImportNode;
 
 //
 // Functions
 //
 
+AstNode *createNode(NodeType type);
 void deleteNode(AstNode *);
 u32 nodeToString(char *, usize, const AstNode *);
 
-AstNode *createFileNode(void);
-AstNode *createNamespaceNode(void);
 
 //
 // Macros

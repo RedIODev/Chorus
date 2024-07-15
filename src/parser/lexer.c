@@ -49,6 +49,9 @@ Keyword __attribute__((pure))getKeywordFromLine(const char *line) {
         if (strncmp("__LINE", line, 6) == 0) {
             return KEYWORD_E__LINE;
         }
+        if (strncmp("sealed", line, 6) == 0) {
+            return KEYWORD_SEALED;
+        }
         if (strncmp("staged", line, 6) == 0) {
             return KEYWORD_STAGED;
         }
@@ -107,11 +110,8 @@ Keyword __attribute__((pure))getKeywordFromLine(const char *line) {
         }
     }
     if (length >= 4) {
-        if (strncmp("self", line, 4) == 0) {
-            return KEYWORD_SELF;
-        }
         if (strncmp("Self", line, 4) == 0) {
-            return KEYWORD_SSELF;
+            return KEYWORD_SELF;
         }
         if (strncmp("with", line, 4) == 0) {
             return KEYWORD_WITH;
@@ -389,10 +389,6 @@ bool __attribute__((pure))isLineComment(const char *line) {
 
 bool isWhitespaceOrKeywordSymbol(const char *line) {
     return isspace(line[0]) || getKeywordLength(getKeywordFromLine(line)) == 1 || line[0] == '\0';
-}
-
-Tokenizer __attribute__((const))createTokenizer(FILE *source) {
-    return (Tokenizer) { .line = NULL, .position = {.character = 0, .line = 0 }, .source = source };
 }
 
 

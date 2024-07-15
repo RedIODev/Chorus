@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 typedef enum {
+    TOKEN_TYPE_TAKEN,
     TOKEN_TYPE_IDENTIFIER,
     TOKEN_TYPE_KEYWORD,
 } TokenType;
@@ -64,7 +65,6 @@ typedef enum {
     KEYWORD_ELSE,
     KEYWORD_ENUM,
     KEYWORD_WITH,
-    KEYWORD_SSELF,
     KEYWORD_SELF,
     // 5 letter keywords
     KEYWORD_LOCAL,
@@ -86,6 +86,7 @@ typedef enum {
     KEYWORD_RETURN,
     KEYWORD_STATIC,
     KEYWORD_STAGED,
+    KEYWORD_SEALED,
     KEYWORD_E__LINE,
     KEYWORD_E__FILE,
     // 7 letter keywords
@@ -119,8 +120,6 @@ typedef struct {
     char *line;
     SourcePosition position;
 } Tokenizer;
-
-Tokenizer createTokenizer(FILE *);
 
 bool tryReadToken(Tokenizer *, Token *);
 

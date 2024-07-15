@@ -43,18 +43,44 @@ bool handleBufferWrite(i32 errorCode) {
     return false;
 }
 
+void deleteAttributes(Attribute *attributes, usize attribute_n) {
+    for (usize i = 0; i < attribute_n; i++) {
+        free(attributes[i].name);
+        for (usize i = 0; i < attributes[i].arguments_n; i++) {
+            free(attributes[i].arguments[i]);
+        }
+        free(attributes[i].arguments);
+    }
+    free(attributes);
+}
+
 //
 // Node Destruction
 //
 
 void deleteFileNode(AstNode *node) {
-    FileRootNode *fileData = GET_NODE_DATA(FileRootNode, node);
-    free(fileData->path);
+    FileRootNode *data = GET_NODE_DATA(FileRootNode, node);
+    free(data->path);
+    data->path = NULL;
 }
 
 void deleteNamespaceNode(AstNode *node) {
-    NamespaceNode *namespaceData = GET_NODE_DATA(NamespaceNode, node);
-    free(namespaceData->name);
+    NamespaceNode *data = GET_NODE_DATA(NamespaceNode, node);
+    free(data->name);
+    data->name = NULL;
+    deleteAttributes(data->attributes, data->attributes_n);
+    data->attributes = NULL;
+}
+
+void deleteImportNode(AstNode *node) {
+    ImportNode *data = GET_NODE_DATA(ImportNode, node);
+    deleteAttributes(data->attributes, data->attributes_n);
+    data->attributes = NULL;
+    for (usize i = 0; i < data->namespacePath_n; i++) {
+        free(data->namespacePath[i]);
+    }
+    free(data->namespacePath);
+    data->namespacePath = NULL;
 }
 
 void deleteNode(AstNode *node) {
@@ -77,13 +103,28 @@ void deleteNode(AstNode *node) {
 //
 
 i32 fileNodeToString(char *buffer, usize length, const AstNode *node) {
-    FileRootNode *fileData = GET_NODE_DATA(FileRootNode, node);
-    return snprintf(buffer, length, "Filepath: \"%s\" }", fileData->path);
+    FileRootNode *data = GET_NODE_DATA(FileRootNode, node);
+    return snprintf(buffer, length, "Filepath: \"%s\" }", data->path);
 }
 
 i32 namespaceNodeToString(char *buffer, usize length, const AstNode *node) {
-    NamespaceNode *namespaceData = GET_NODE_DATA(NamespaceNode, node);
-    return snprintf(buffer, length, "Name: %s, AccessModifier: %s", namespaceData->name, accessModifierToString(namespaceData->accessModifier));
+    NamespaceNode *data = GET_NODE_DATA(NamespaceNode, node);
+    return snprintf(buffer, length, "Name: %s, AccessModifier: %s", data->name, accessModifierToString(data->accessModifier));
+}
+
+i32 importNodeToString(char *buffer, usize length, const AstNode *node) {
+    ImportNode *data = GET_NODE_DATA(ImportNode, node);
+    i32 writtenBytes = 0;
+    writtenBytes += snprintf(buffer, length, "Path: ");
+    for (usize i = 0; i < data->namespacePath_n-1; i++) {
+        if (i >= data->namespacePath_n -1) {
+            break;
+        }
+        writtenBytes += snprintf(buffer+writtenBytes, length - writtenBytes, "%s::", data->namespacePath[i]);
+    }
+    writtenBytes += snprintf(buffer+writtenBytes, length - writtenBytes, "%s", data->namespacePath[data->namespacePath_n-1]);
+
+    return writtenBytes;
 }
 
 u32 nodeToString(char *buffer, usize length, const AstNode *node) {
@@ -121,8 +162,23 @@ u32 nodeToString(char *buffer, usize length, const AstNode *node) {
     return messageEnd;
 }
 
-AstNode *createFileNode(void) {
-    AstNode *fileNode = MAKE_NODE(FileRootNode);
-    fileNode->type = NODE_TYPE_FILE_ROOT;
-    return fileNode;
+AstNode *createNode(NodeType type) {
+    AstNode *node;
+    switch (type)
+    {
+    case NODE_TYPE_FILE_ROOT:
+        node = MAKE_NODE(FileRootNode);
+        break;
+    case NODE_TYPE_NAMESPACE:
+        node = MAKE_NODE(NamespaceNode);
+        break;
+    case NODE_TYPE_IMPORT:
+        node = MAKE_NODE(ImportNode);
+        break;
+    default:
+        handleInvalidNodeType(type);
+        return NULL;
+    }
+    node->type = type;
+    return node;
 }
