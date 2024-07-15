@@ -115,15 +115,27 @@ i32 namespaceNodeToString(char *buffer, usize length, const AstNode *node) {
 i32 importNodeToString(char *buffer, usize length, const AstNode *node) {
     ImportNode *data = GET_NODE_DATA(ImportNode, node);
     i32 writtenBytes = 0;
-    writtenBytes += snprintf(buffer, length, "Path: ");
+    i32 error = 0;
+    error = snprintf(buffer, length, "Path: ");
+    if (error < 0) {
+        return error;
+    }
+    writtenBytes += error;
     for (usize i = 0; i < data->namespacePath_n-1; i++) {
         if (i >= data->namespacePath_n -1) {
             break;
         }
-        writtenBytes += snprintf(buffer+writtenBytes, length - writtenBytes, "%s::", data->namespacePath[i]);
+        error = snprintf(buffer+writtenBytes, length - writtenBytes, "%s::", data->namespacePath[i]);
+        if (error < 0) {
+            return error;
+        }
+        writtenBytes += error;
     }
-    writtenBytes += snprintf(buffer+writtenBytes, length - writtenBytes, "%s", data->namespacePath[data->namespacePath_n-1]);
-
+    error = snprintf(buffer+writtenBytes, length - writtenBytes, "%s", data->namespacePath[data->namespacePath_n-1]);
+    if (error < 0) {
+        return error;
+    }
+    writtenBytes += error;
     return writtenBytes;
 }
 
