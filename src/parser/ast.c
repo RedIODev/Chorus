@@ -11,6 +11,8 @@ const char * __attribute__((const))nodeTypeToString(NodeType type) {
             return "FileRoot";
         case NODE_TYPE_NAMESPACE:
             return "Namespace";
+        case NODE_TYPE_IMPORT:
+            return "Import";
         default:
             return "Invalid";
     }
@@ -35,7 +37,7 @@ void handleInvalidNodeType(NodeType type) {
     setError(ERROR_INVALID_NODE_TYPE, msg);
 }
 
-bool handleBufferWrite(i32 errorCode) {
+bool handleBufferWrite(i64 errorCode) {
     if (errorCode < 0) {
         setError(ERROR_BUFFER_WRITE, strerror(errno));
         return true;
@@ -46,8 +48,8 @@ bool handleBufferWrite(i32 errorCode) {
 void deleteAttributes(Attribute *attributes, usize attribute_n) {
     for (usize i = 0; i < attribute_n; i++) {
         free(attributes[i].name);
-        for (usize i = 0; i < attributes[i].arguments_n; i++) {
-            free(attributes[i].arguments[i]);
+        for (usize j = 0; j < attributes[i].arguments_n; i++) {
+            free(attributes[i].arguments[j]);
         }
         free(attributes[i].arguments);
     }
@@ -91,6 +93,9 @@ void deleteNode(AstNode *node) {
         case NODE_TYPE_NAMESPACE:
             deleteNamespaceNode(node);
             break;
+        case NODE_TYPE_IMPORT:
+            deleteImportNode(node);
+            break;
         default:
             handleInvalidNodeType(node->type);
             return;
@@ -112,15 +117,15 @@ i32 namespaceNodeToString(char *buffer, usize length, const AstNode *node) {
     return snprintf(buffer, length, "Name: %s, AccessModifier: %s", data->name, accessModifierToString(data->accessModifier));
 }
 
-i32 importNodeToString(char *buffer, usize length, const AstNode *node) {
+i64 importNodeToString(char *buffer, usize length, const AstNode *node) {
     ImportNode *data = GET_NODE_DATA(ImportNode, node);
-    i32 writtenBytes = 0;
+    u32 writtenBytes = 0;
     i32 error = 0;
     error = snprintf(buffer, length, "Path: ");
     if (error < 0) {
         return error;
     }
-    writtenBytes += error;
+    writtenBytes += (u32)error;
     for (usize i = 0; i < data->namespacePath_n-1; i++) {
         if (i >= data->namespacePath_n -1) {
             break;
@@ -129,13 +134,13 @@ i32 importNodeToString(char *buffer, usize length, const AstNode *node) {
         if (error < 0) {
             return error;
         }
-        writtenBytes += error;
+        writtenBytes += (u32)error;
     }
     error = snprintf(buffer+writtenBytes, length - writtenBytes, "%s", data->namespacePath[data->namespacePath_n-1]);
     if (error < 0) {
         return error;
     }
-    writtenBytes += error;
+    writtenBytes += (u32)error;
     return writtenBytes;
 }
 
@@ -145,7 +150,7 @@ u32 nodeToString(char *buffer, usize length, const AstNode *node) {
         parentType = nodeTypeToString(node->parent->type);
     }
 
-    i32 errorResult = snprintf(buffer, length, "%sNode { Parent: %s, Children: [%ld], ", nodeTypeToString(node->type), parentType, node->children_n);
+    i64 errorResult = snprintf(buffer, length, "%sNode { Parent: %s, Children: [%ld], ", nodeTypeToString(node->type), parentType, node->children_n);
 
     if (handleBufferWrite(errorResult)) {
         return 0;
@@ -162,6 +167,13 @@ u32 nodeToString(char *buffer, usize length, const AstNode *node) {
             break;
         case NODE_TYPE_NAMESPACE:
             errorResult = namespaceNodeToString(buffer + messageEnd, length - messageEnd, node);
+            if (handleBufferWrite(errorResult)) {
+                return 0;
+            }
+            messageEnd += (u32)errorResult;
+            break;
+        case NODE_TYPE_IMPORT:
+            errorResult = importNodeToString(buffer + messageEnd, length - messageEnd, node);
             if (handleBufferWrite(errorResult)) {
                 return 0;
             }
