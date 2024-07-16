@@ -1,6 +1,7 @@
 #ifndef PARSER_AST_H
 #define PARSER_AST_H
 #include "../utils/primitive.h"
+#include "../utils/vector.h"
 #include <stdlib.h>
 
 //
@@ -12,6 +13,8 @@ typedef enum {
     NODE_TYPE_NAMESPACE,
     NODE_TYPE_IMPORT,
 } NodeType;
+
+void handleInvalidNodeType(NodeType type);
 
 typedef enum {
     ACCESS_MODIFIER_DEFAULT_PRIVATE,
@@ -26,10 +29,20 @@ typedef struct {
     usize arguments_n;
 } Attribute;
 
-typedef struct AstNode {
-    struct AstNode *parent;
-    struct AstNode *children;
-    usize children_n;
+typedef struct AstNode_s AstNode;
+
+//
+// Ast Functions
+//
+AstNode *createNode(NodeType);
+void deleteNode(AstNode *);
+u32 nodeToString(char *, usize, const AstNode *);
+
+CREATE_VECTOR_TYPE(AstNodes, AstNode*, deleteNode)
+
+typedef struct AstNode_s {
+    AstNode *parent;
+    AstNodes children;
     NodeType type;
     u8 data[];
 } AstNode;
@@ -51,15 +64,6 @@ typedef struct {
     char **namespacePath;
     usize namespacePath_n;
 } ImportNode;
-
-//
-// Functions
-//
-
-AstNode *createNode(NodeType type);
-void deleteNode(AstNode *);
-u32 nodeToString(char *, usize, const AstNode *);
-
 
 //
 // Macros

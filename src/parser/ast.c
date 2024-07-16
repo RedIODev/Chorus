@@ -100,6 +100,10 @@ void deleteNode(AstNode *node) {
             handleInvalidNodeType(node->type);
             return;
     }
+    for (usize i = 0; i < node->children.size; i++) {
+        deleteNode(node->children.data[i]);
+    }
+    
     free(node);
 }
 
@@ -150,7 +154,7 @@ u32 nodeToString(char *buffer, usize length, const AstNode *node) {
         parentType = nodeTypeToString(node->parent->type);
     }
 
-    i64 errorResult = snprintf(buffer, length, "%sNode { Parent: %s, Children: [%ld], ", nodeTypeToString(node->type), parentType, node->children_n);
+    i64 errorResult = snprintf(buffer, length, "%sNode { Parent: %s, Children: [%ld], ", nodeTypeToString(node->type), parentType, node->children.size);
 
     if (handleBufferWrite(errorResult)) {
         return 0;
