@@ -45,16 +45,16 @@ bool handleBufferWrite(i64 errorCode) {
     return false;
 }
 
-void deleteAttributes(Attribute *attributes, usize attribute_n) {
-    for (usize i = 0; i < attribute_n; i++) {
-        free(attributes[i].name);
-        for (usize j = 0; j < attributes[i].arguments_n; i++) {
-            free(attributes[i].arguments[j]);
-        }
-        free(attributes[i].arguments);
-    }
-    free(attributes);
-}
+// void deleteAttributes(Attribute *attributes, usize attribute_n) {
+//     for (usize i = 0; i < attribute_n; i++) {
+//         free(attributes[i].name);
+//         for (usize j = 0; j < attributes[i].arguments_n; i++) {
+//             free(attributes[i].arguments[j]);
+//         }
+//         free(attributes[i].arguments);
+//     }
+//     free(attributes);
+// }
 
 //
 // Node Destruction
@@ -70,14 +70,14 @@ void deleteNamespaceNode(AstNode *node) {
     NamespaceNode *data = GET_NODE_DATA(NamespaceNode, node);
     free(data->name);
     data->name = NULL;
-    deleteAttributes(data->attributes, data->attributes_n);
-    data->attributes = NULL;
+    // deleteAttributes(data->attributes, data->attributes_n);
+    // data->attributes = NULL;
 }
 
 void deleteImportNode(AstNode *node) {
     ImportNode *data = GET_NODE_DATA(ImportNode, node);
-    deleteAttributes(data->attributes, data->attributes_n);
-    data->attributes = NULL;
+    //deleteAttributes(data->attributes, data->attributes_n);
+    // data->attributes = NULL;
     for (usize i = 0; i < data->namespacePath_n; i++) {
         free(data->namespacePath[i]);
     }

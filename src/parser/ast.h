@@ -23,11 +23,11 @@ typedef enum {
 
 } AccessModifier;
 
-typedef struct {
-    char *name;
-    char **arguments;
-    usize arguments_n;
-} Attribute;
+// typedef struct {
+//     char *name;
+//     char **arguments;
+//     usize arguments_n;
+// } Attribute;
 
 typedef struct AstNode_s AstNode;
 
@@ -54,13 +54,13 @@ typedef struct {
 typedef struct {
     char *name;
     AccessModifier accessModifier;
-    Attribute *attributes;
-    usize attributes_n;
+    // Attribute *attributes;
+    // usize attributes_n;
 } NamespaceNode;
 
 typedef struct {
-    Attribute *attributes;
-    usize attributes_n;
+    // Attribute *attributes;
+    // usize attributes_n;
     char **namespacePath;
     usize namespacePath_n;
 } ImportNode;

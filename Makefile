@@ -23,7 +23,7 @@ all: $(OBJS)
 refactor: CCFLAGS += $(CRFFLAGS)
 refactor: all
 
-release: CCFLAGS += $(CRFLAGS)
+release: CCFLAGS := $(CRFLAGS)
 release: $(OBJS) 
 	$(CC) $(CCFLAGS) $(OBJS) -o $(BIN_RELEASE)
 
