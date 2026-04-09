@@ -1,17 +1,12 @@
-use std::{fs::File, io::Result};
+use std::{error::Error, fs::File};
 
-use lexer::{CodeSource, FileCodeSourceImpl};
-pub mod ast;
-pub mod error;
-mod helper;
-pub mod lexer;
-pub mod tree;
-mod weakbox;
-fn main() -> Result<()> {
+mod tokenizer;
+
+fn main() -> TmpResult<()> {
     //Decide post or prefixed types.
-    let cs = FileCodeSourceImpl::new(File::open("./Testfile.ch")?);
-    for token in cs.iter()? {
-        println!("{}", token?)
-    }
+    let file = File::open("./Testfile.ch")?;
+    
         Ok(())
 }
+
+pub type TmpResult<T> = Result<T, Box<dyn Error>>;
