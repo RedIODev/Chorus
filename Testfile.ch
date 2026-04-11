@@ -13,13 +13,13 @@ public namespace MySpace {
     }
 }
 
-interface AddAssign<T = Self> {
-    fn addAssign(self: &mut Self, other: T);
+interface AddAssign<T = This> {
+    fn addAssign(this: &mut This, other: T);
 }
 
 implement MySpace: AddAssign {
-    fn addAssign(self: &mut Self, other: T) {
-        self.s += other.s
+    fn addAssign(this: &mut This, other: T) {
+        this.s += other.s
     }
 }
 
@@ -37,7 +37,7 @@ fn func[a,b]<A,B>(a:A,b:B) -> C {
     
 }
 
-interface Alloc<P = (), R = Self>
+interface Alloc<P = (), R = This>
 where P is Tuple {
     fn alloc(params: P) -> R {
         ...
