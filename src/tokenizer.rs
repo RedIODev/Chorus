@@ -1,11 +1,10 @@
-use std::collections::{BTreeMap, HashMap};
-use std::iter::{FilterMap, Peekable};
+use std::collections::BTreeMap;
+use std::iter::FilterMap;
 use std::ops::{Add, AddAssign};
 use std::{fs::File, path::Path};
-use std::io::{self, BufRead, Bytes, Cursor, Read};
+use std::io::{self, Bytes, Read};
 
-use enum_assoc::Assoc;
-use itertools::{Itertools, MultiPeek, PeekNth, PeekingNext};
+use itertools::PeekNth;
 use lazy_static::lazy_static;
 use num_enum::TryFromPrimitive;
 use strum::VariantArray;
@@ -31,7 +30,7 @@ impl Tokenizer {
     pub fn peek(&mut self) -> (Option<Token>, Whitespace) {
         let mut whitespace = Whitespace::EMPTY;
         whitespace += self.skip_whitespace();
-        let Some(first_char) = self.chars.peek_nth(self.peek_index as usize).cloned() else { return (None, whitespace) };
+        let Some(first_char) = self.peek_index() else { return (None, whitespace) };
         if let Ok(symbol) = Symbol::try_from_primitive(first_char as u8) {
             if let Some(token) = self.parse_comment(symbol) {
                 return (Some(token), whitespace);
@@ -51,13 +50,17 @@ impl Tokenizer {
         (Some(Token::Identifier(identifier)), whitespace)
     }
 
+    fn peek_index(&mut self) -> Option<char> {
+        self.chars.peek_nth(self.peek_index as usize).copied()
+    }
+
     fn skip_whitespace(&mut self) -> Whitespace {
         let mut whitespace = Whitespace::EMPTY;
-        while let Some(character) = self.chars.peek_nth(self.peek_index as usize) {
+        while let Some(character) = self.peek_index() {
             if !character.is_whitespace() { break; }
             self.peek_index+=1;
             whitespace.columns += 1;
-            if *character == '\n' { 
+            if character == '\n' { 
                 whitespace.new_lines += 1; 
                 whitespace.columns = 0;
             }
@@ -67,11 +70,11 @@ impl Tokenizer {
 
     fn parse_identifier(&mut self) -> String {
         let mut identifier = String::new();
-        while let Some(character) = self.chars.peek_nth(self.peek_index as usize) {
+        while let Some(character) = self.peek_index() {
             if character.is_whitespace() { break;}
-            if Symbol::try_from_primitive(*character as u8).is_ok() {break;}
+            if Symbol::try_from_primitive(character as u8).is_ok() {break;}
             self.peek_index+=1;
-            identifier.push(*character);
+            identifier.push(character);
         }
 
         identifier
@@ -84,8 +87,7 @@ impl Tokenizer {
                 string.push(*character);
             }
         }
-        let keyword = KEYWORD_MAP.iter().find(|(k,_)| string.starts_with(*k));
-        let Some((name, keyword)) = keyword else {return None};
+        let (name, keyword) = KEYWORD_MAP.iter().find(|(k,_)| string.starts_with(*k))?;
         self.peek_index += name.len() as u32;
         Some(*keyword)
     }
@@ -105,10 +107,10 @@ impl Tokenizer {
 
     fn parse_line_comment(&mut self) -> Token {
         let mut comment = String::from("//");
-        while let Some(character) = self.chars.peek_nth(self.peek_index as usize) {
+        while let Some(character) = self.peek_index() {
             self.peek_index+=1;
-            if *character == '\n' {break;}
-            comment.push(*character);
+            if character == '\n' {break;}
+            comment.push(character);
         }
         Token::Comment(Comment::LineComment(comment))
     }
@@ -117,17 +119,22 @@ impl Tokenizer {
         let mut comment = String::from("/*");
         let mut new_line_count = 0;
         let mut columns = 0;
-        while let Some(character) = self.chars.peek_nth(self.peek_index as usize) {
+        let mut found_asterisk = false;
+        while let Some(character) = self.peek_index() {
             self.peek_index+=1;
-            comment.push(*character);
+            comment.push(character);
             columns+=1;
-            if *character == '\n' { 
+            if character == '\n' { 
                 new_line_count+=1;
                 columns = 0;
             };
-            if *character != '*' {continue;}
-            let Some(next_char) = self.chars.peek_nth(self.peek_index as usize) else {break;};
-            if *next_char == '/' {break;}
+            if character == '*' {
+                found_asterisk = true; 
+                continue;
+            }
+            if !found_asterisk {continue;}
+            if character == '/' {break;}
+            found_asterisk = false;
         }
 
         Token::Comment(Comment::BlockComment {comment, new_line_count, columns})
@@ -142,7 +149,7 @@ impl Iterator for Tokenizer {
         self.line += whitespace.new_lines;
         self.column += whitespace.columns;
         if whitespace.new_lines > 0 {
-            self.column = whitespace.columns;
+            self.column = whitespace.columns + 1;
         }
         let token = token?;
         let pos_token = PosToken {token, line: self.line, column: self.column };
@@ -176,7 +183,7 @@ pub enum Token {
 }
 
 impl Token {
-    fn line_len(&self) -> u32 {
+    pub fn line_len(&self) -> u32 {
         match &self {
             Token::Comment(Comment::LineComment(_)) => 0,
             Token::Comment(Comment::BlockComment { columns, .. }) => *columns,

@@ -5,7 +5,7 @@ public namespace MySpace {
 
     const NUMBER:u32 = 5;
 
-    public const inline unsafe fn mylocalfunc1<T>[a, b](t: Test) -> String {
+    public const inline unsafe fn mylocalfunc1<T>(t: Test) -> String {
         t+= 5;
         var ptr = &mut t;   //comment test
         ptr.s = "Hello";
@@ -33,9 +33,11 @@ fn forLoop(iter:Iterable) {
     }
 }
 
-fn func[a,b]<A,B>(a:A,b:B) -> C {
+/*
+    fn func<A,B>(a:A,b:B) -> C {***
     
-}
+    }
+***/
 
 interface Alloc<P = (), R = This>
 where P is Tuple {
