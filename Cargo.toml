@@ -1,12 +1,13 @@
 [package]
 name = "chorus"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 # bitflags = "2.4.1"
+memmap2 = "0.9.10"
 strum = "0.28.0"
 strum_macros = "0.28.0"
 num_enum = "0.7.6"
@@ -15,6 +16,9 @@ itertools = "0.14.0"
 lazy_static = "1.4.0"
 unicode-segmentation = "1.13.2"
 unicode_reader = "1.0.2"
+dhat = "0.3.3"
+
+
 # refbox = "0.3.0"
 [dependencies.uuid]
 version = "1.23.0"
@@ -23,3 +27,8 @@ features = [
     "fast-rng",          # Use a faster (but still sufficiently random) RNG
     "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
 ]
+[features]
+dhat-heap = []
+
+[profile.release]
+debug = true
