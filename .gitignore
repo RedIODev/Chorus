@@ -3,7 +3,7 @@
 dhat-heap.json
 flamegraph.svg
 perf.data*
-Testfile.ch
+Testfile*.ch
 
 # Added by cargo
 

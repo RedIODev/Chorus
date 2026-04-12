@@ -6,12 +6,16 @@ use std::{fs::File, path::Path};
 
 use itertools::{Itertools, MultiPeek};
 use lazy_static::lazy_static;
-use memmap2::{Mmap, MmapOptions};
+use memmap2::MmapOptions;
 use num_enum::TryFromPrimitive;
 use strum::VariantArray;
-use strum_macros::{IntoStaticStr, VariantArray};
 
 use crate::TmpResult;
+use crate::tokenizer::mmap_reader::MmapReader;
+use crate::tokenizer::token_types::{Comment, Keyword, PosToken, Symbol, Token};
+
+mod mmap_reader;
+mod token_types;
 
 pub struct Tokenizer {
     iter: MultiPeek<MmapReader>,
@@ -27,8 +31,16 @@ impl Tokenizer {
             column: 1,
         })
     }
+    
+    fn open_file(filename: impl AsRef<Path>) -> TmpResult<MultiPeek<MmapReader>> {
+        let file = File::open(filename)?;
+        let mmap =  unsafe { MmapOptions::new().populate().map(&file)? };
+        #[cfg(unix)]
+        mmap.advise(memmap2::Advice::Sequential)?;
+        Ok(MmapReader::new(mmap).multipeek())
+    }
 
-    pub fn next_token(&mut self) -> (Option<Token>, Whitespace) {
+    fn next_token(&mut self) -> (Option<Token>, Whitespace) {
         let mut whitespace = Whitespace::default();
         whitespace += self.skip_whitespace();
         self.iter.reset_peek();
@@ -61,14 +73,6 @@ impl Tokenizer {
         (Some(Token::Identifier(identifier)), whitespace)
     }
 
-    fn open_file(filename: impl AsRef<Path>) -> TmpResult<MultiPeek<MmapReader>> {
-        let file = File::open(filename)?;
-        let mmap =  unsafe { MmapOptions::new().populate().map(&file)? };
-        #[cfg(unix)]
-        mmap.advise(memmap2::Advice::Sequential)?;
-        //let reader = io::BufReader::new(file);
-        Ok(MmapReader::new(mmap).multipeek())
-    }
 
     fn skip_whitespace(&mut self) -> Whitespace {
         self.iter.reset_peek();
@@ -251,42 +255,6 @@ impl Iterator for Tokenizer {
     }
 }
 
-#[derive(Debug)]
-pub struct PosToken {
-    pub token: Token,
-    pub line: u32,
-    pub column: u32,
-}
-
-#[derive(Debug)]
-pub enum Token {
-    Identifier(String),
-    Keyword(Keyword),
-    Symbol(Symbol),
-    Comment(Comment),
-}
-
-impl Token {
-    pub fn line_len(&self) -> u32 {
-        match &self {
-            Token::Comment(Comment::Line(_)) => 0,
-            Token::Comment(Comment::Doc(..)) => 0,
-            Token::Comment(Comment::Block { columns, .. }) => *columns,
-            Token::Identifier(identifier) => identifier.len() as u32,
-            Token::Keyword(keyword) => <&str>::from(keyword).len() as u32,
-            Token::Symbol(_) => 1,
-        }
-    }
-
-    fn new_lines(&self) -> u32 {
-        match &self {
-            Token::Comment(Comment::Line(_)) => 1,
-            Token::Comment(Comment::Block { new_line_count, .. }) => *new_line_count,
-            _ => 0,
-        }
-    }
-}
-
 lazy_static! {
     static ref KEYWORD_LEN_TABLE: HashMap<u8, HashMap<&'static str, Keyword>> = Keyword::VARIANTS 
         .iter()
@@ -295,94 +263,6 @@ lazy_static! {
         .into_iter()
         .map(|(k,g)| (k, g.map(|keyword| (<&'static str>::from(keyword), keyword)).collect()))
         .collect();
-}
-
-#[derive(Debug)]
-pub enum Comment {
-    Line(String),
-    Doc(String, u32),
-    Block {
-        comment: String,
-        new_line_count: u32,
-        columns: u32,
-    },
-}
-
-impl Comment {
-    pub fn comment(&self) -> &str {
-        match self {
-            Comment::Block { comment, .. } => comment,
-            Comment::Doc(comment, _) => comment,
-            Comment::Line(comment) => comment,
-        }
-    }
-}
-
-#[derive(IntoStaticStr, VariantArray, Clone, Copy, Debug)]
-#[strum(serialize_all = "lowercase")]
-pub enum Keyword {
-    Var,
-    Fn,
-    For,
-    While,
-    Loop,
-    If,
-    Else,
-    Union,
-    Enum,
-    Type,
-    Struct,
-    Return,
-    Yield,
-    Continue,
-    Break,
-    Switch,
-    This,
-    Interface,
-    Implement,
-    Where,
-    Const,
-    Namespace,
-    Export,
-    Import,
-    Macro,
-}
-
-#[derive(TryFromPrimitive, Clone, Copy, Debug)]
-#[repr(u8)]
-#[non_exhaustive]
-pub enum Symbol {
-    BraceOpen = b'(',
-    BraceClosed = b')',
-    CurlyBraceOpen = b'{',
-    CurlyBraceClosed = b'}',
-    SquareBraceOpen = b'[',
-    SquareBraceClosed = b']',
-    And = b'&',
-    Pipe = b'|',
-    Slash = b'/',
-    Equals = b'=',
-    Comma = b',',
-    SemiColon = b';',
-    Colon = b':',
-    Period = b'.',
-    Minus = b'-',
-    Plus = b'+',
-    Asterisk = b'*',
-    QuestionMark = b'?',
-    ExclamationMark = b'!',
-    DoubleQuote = b'"',
-    Quote = b'\'',
-    Tilde = b'~',
-    Hashtag = b'#',
-    GreaterThen = b'>',
-    SmallerThen = b'<',
-    Hat = b'^',
-    Degree = b'\xB0', // "°" ASCII character
-    Backslash = b'\\',
-    Percent = b'%',
-    Dollar = b'$',
-    At = b'@',
 }
 
 #[derive(Clone, Copy, Default)]
@@ -408,45 +288,3 @@ impl AddAssign for Whitespace {
     }
 }
 
-pub struct MmapReader {
-    file:Mmap,
-    byte_index:usize
-}
-
-impl MmapReader {
-
-    pub fn new(file: Mmap) -> Self {
-        Self { file, byte_index: 0 }
-    }
-
-    fn utf8_to_char(slice:&[u8]) -> Result<char, UTF8ReadError> {
-        let chunk = slice.utf8_chunks().next().ok_or(UTF8ReadError::Eof)?;
-        chunk.valid().chars().next().ok_or(UTF8ReadError::InvalidByte)
-    }
-
-
-}
-
-impl Iterator for MmapReader {
-    type Item = char;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            let end_index = (self.file.len() - self.byte_index).clamp(0, 4) + self.byte_index;
-            let next_slice = self.file.get(self.byte_index..end_index)?;
-            match Self::utf8_to_char(next_slice) {
-                Ok(char) => {
-                    self.byte_index+=char.len_utf8();
-                    return Some(char)
-                },
-                Err(UTF8ReadError::Eof) => return None,
-                Err(UTF8ReadError::InvalidByte) => self.byte_index+=1
-            }
-        }
-    }
-}
-
-enum UTF8ReadError {
-    Eof,
-    InvalidByte
-}

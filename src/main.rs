@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{env::args, error::Error};
 
 use crate::tokenizer::{Tokenizer};
 
@@ -12,14 +12,15 @@ static ALLOC: dhat::Alloc = dhat::Alloc;
 fn main() -> TmpResult<()> {
     #[cfg(feature = "dhat-heap")]
     let _profiler = dhat::Profiler::new_heap();
-
+    let file = args().nth(1).expect("Provide a source file!");
     let mut token_len = 0;
     let mut token_count = 0;
-    let tokenizer = Tokenizer::new("./Testfile.ch")?;
+    println!("'{file}'");
+    let tokenizer = Tokenizer::new(&file)?;
             for token in tokenizer {
                 token_len += token.token.line_len();
                 token_count+=1;
-                if token_count < 4000 {
+                if token_count < 1000 {
                     println!("Token:[{:?}]", token)
                 }
             }
