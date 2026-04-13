@@ -3,6 +3,7 @@ use std::{env::args, error::Error};
 use crate::tokenizer::{Tokenizer};
 
 mod tokenizer;
+mod parser;
 
 
 #[cfg(feature = "dhat-heap")]
